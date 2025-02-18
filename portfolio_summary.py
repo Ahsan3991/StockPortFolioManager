@@ -174,6 +174,39 @@ def calculate_total_dividends():
     finally:
         conn.close()
 
+def view_dividend_income():
+    """Displays dividend income summary along with a line chart of dividends over time."""
+    st.subheader("📈 Dividend Income Over Time")
+    
+    conn = sqlite3.connect("portfolio.db")
+    
+    # Query to fetch dividend data
+    dividend_query = """
+        SELECT payment_date as 'Date', amount_paid as 'Net Dividend'
+        FROM dividends
+        ORDER BY payment_date ASC
+    """
+    dividend_df = pd.read_sql(dividend_query, conn)
+    conn.close()
+    
+    if dividend_df.empty:
+        st.warning("No dividend records found.")
+    else:
+        # Convert date column to datetime
+        dividend_df['Date'] = pd.to_datetime(dividend_df['Date'])
+
+        # Create line chart
+        fig = px.line(dividend_df, x='Date', y='Net Dividend', 
+                      markers=True, title="Dividend Income Over Time",
+                      labels={'Net Dividend': 'Net Dividend (Rs.)', 'Date': 'Payment Date'})
+
+        # Display chart
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Display raw dividend data
+        st.write("### Dividend Details")
+        st.dataframe(dividend_df.style.format({"Net Dividend": "Rs. {:.2f}"}), hide_index=True)
+
 def view_portfolio_summary():
     """Displays comprehensive portfolio summary with P/L and dividends."""
     st.header("📊 Portfolio Summary")
@@ -305,6 +338,7 @@ def view_portfolio_summary():
                 st.metric("Total Tax Paid", f"Rs. {total_tax:,.2f}")
     
     with tab3:
+        view_dividend_income()
         dividends = calculate_total_dividends()
         
         if not dividends:

@@ -7,6 +7,36 @@ import time
 from gpt4all import GPT4All
 import pandas as pd
 
+def clean_json_output(json_text):
+    """Fixes common JSON formatting issues like misplaced commas in numbers."""
+    json_text = re.sub(r'(\d+),(\d+)', r'\1\2', json_text)  # Remove commas in numbers
+    
+    try:
+        parsed_data = json.loads(json_text)  # Try parsing after cleanup
+        return parsed_data
+    except json.JSONDecodeError as e:
+        print("JSON Decoding Failed:", str(e))
+        return None
+
+def validate_json_structure(parsed_data):
+    """Ensures the JSON has the correct structure."""
+    if not isinstance(parsed_data, dict):
+        return False
+    
+    required_keys = {"date", "memo_number", "trades"}
+    if not required_keys.issubset(parsed_data.keys()):
+        return False
+    
+    if not isinstance(parsed_data["trades"], list) or len(parsed_data["trades"]) == 0:
+        return False
+    
+    trade_keys = {"stock", "rate", "quantity", "comm_amount", "cdc_charges", "sales_tax", "total_amount"}
+    for trade in parsed_data["trades"]:
+        if not isinstance(trade, dict) or not trade_keys.issubset(trade.keys()):
+            return False
+    
+    return True
+
 def extract_memo_number(text):
     """Extracts the memo number from the raw trade receipt text using regex."""
     match = re.search(r"Memo\s*#\s*(\d+/\w+)", text, re.IGNORECASE)
@@ -29,12 +59,14 @@ def extract_trade_details_with_llm(text):
                 f"Strict JSON format rules:\n"
                 f"- Do not add explanations or summaries.\n"
                 f"- Ensure numbers do not contain commas.\n"
-                f"- Return only JSON output.\n\n"
+                f"- Return only JSON output.\n"
+                f"- Each trade must have all required fields.\n"
+                f"- The JSON should be properly formatted even when there are multiple trades.\n\n"
                 f"Process the following trade receipt text:\n"
                 f"{text}"
             )
 
-            response = model.generate(prompt, temp=0, max_tokens=500)
+            response = model.generate(prompt, temp=0, max_tokens=800)
 
             # Debugging: Show raw response
             st.write("### Raw LLM Response:")
@@ -45,13 +77,16 @@ def extract_trade_details_with_llm(text):
             if match:
                 json_data = match.group(0)
 
-                # Fix number formatting
-                json_data = re.sub(r'(\d),(\d)', r'\1\2', json_data)
+                # 🔹 Apply Fix: Clean JSON numbers
+                json_data = clean_json_output(json_data)
 
-                parsed_data = json.loads(json_data)
-                parsed_data["memo_number"] = memo_number  # Ensure memo number is included
-
-                return parsed_data
+                if json_data and validate_json_structure(json_data):
+                    parsed_data = json_data
+                    parsed_data["memo_number"] = memo_number  # Ensure memo number is included
+                    return parsed_data
+                else:
+                    st.error("❌ JSON validation failed. Check LLM response format.")
+                    return {}
             else:
                 st.error("❌ No valid JSON response extracted.")
                 return {}
@@ -130,41 +165,6 @@ def process_trade_receipt():
                 st.error("❌ Failed to extract trade details.")
                 return
 
-            # Check if memo exists
-            conn = sqlite3.connect("portfolio.db", timeout=10)
-            cursor = conn.cursor()
-            cursor.execute("PRAGMA journal_mode=WAL;")  # Reduce locking
-            cursor.execute("SELECT COUNT(*) FROM memos WHERE memo_number = ?", (memo_number,))
-            existing_count = cursor.fetchone()[0]
-            conn.close()
-
-            if existing_count > 0:
-                overwrite = st.radio(
-                    f"Trades for memo number {memo_number} already exist. Overwrite?",
-                    ["No", "Yes"], 
-                    key=f"overwrite_{memo_number}"
-                )
-
-                if overwrite == "No":
-                    st.warning(f"Trades for memo number {memo_number} were not added.")
-                    return
-
-                # Delete existing trades
-                conn = sqlite3.connect("portfolio.db", timeout=10)
-                cursor = conn.cursor()
-                try:
-                    cursor.execute("BEGIN TRANSACTION")
-                    cursor.execute("DELETE FROM trades WHERE memo_number = ?", (memo_number,))
-                    cursor.execute("DELETE FROM memos WHERE memo_number = ?", (memo_number,))
-                    cursor.execute("COMMIT")
-                    st.info(f"Existing trades for memo number {memo_number} deleted.")
-                except sqlite3.Error as e:
-                    cursor.execute("ROLLBACK")
-                    st.error(f"❌ Error deleting existing trades: {str(e)}")
-                    return
-                finally:
-                    conn.close()
-
             # Insert new trades in a SINGLE TRANSACTION
             conn = sqlite3.connect("portfolio.db", timeout=10)
             cursor = conn.cursor()
@@ -201,7 +201,6 @@ def process_trade_receipt():
                 st.error(f"❌ Failed to add trades: {str(e)}")
             finally:
                 conn.close()
-
 
 # ✅ **Manual Entry UI**
 def manual_trade_entry():
