@@ -276,7 +276,7 @@ def view_portfolio_summary():
             # Update layout
             fig.update_layout(
                 showlegend=True,
-                height=500,
+                height=250,
                 margin=dict(t=50, b=0, l=0, r=0)
             )
             
