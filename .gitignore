@@ -1,0 +1,51 @@
+# Ignore Python cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Ignore virtual environments
+venv/
+.venv/
+env/
+ENV/
+*.env
+
+# Ignore database files
+portfolio.db
+portfolio.db-journal
+
+# Ignore GPT-4All model files (if any large models are used)
+*.gguf
+*.bin
+*.onnx
+
+# Ignore PDFs (since they may be uploaded for processing)
+*.pdf
+
+# Ignore dataset files (if any)
+*.csv
+*.xlsx
+
+# Ignore Jupyter Notebook checkpoints (if used)
+.ipynb_checkpoints/
+
+# Ignore Streamlit session state files
+.streamlit/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore VS Code settings
+.vscode/
+
+# Ignore JetBrains IDEs (PyCharm, WebStorm)
+.idea/
+
+# Ignore node_modules (if you ever use frontend files)
+node_modules/
+
+# Ignore package dependencies
+requirements.txt.lock

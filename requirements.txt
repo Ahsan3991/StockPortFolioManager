@@ -1,0 +1,7 @@
+streamlit
+sqlite3
+pandas
+pdfplumber
+gpt4all
+regex
+plotly
