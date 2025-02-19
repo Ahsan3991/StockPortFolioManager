@@ -1,69 +1,180 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+from datetime import datetime
 
-def delete_trade(memo_number, stock):
-    """Deletes a single trade record while keeping other trades under the same memo."""
-    conn = sqlite3.connect("portfolio.db")
-    cursor = conn.cursor()
-    try:
-        cursor.execute("BEGIN TRANSACTION")
-        # Delete only the selected trade under the memo
-        cursor.execute("DELETE FROM trades WHERE memo_number = ? AND stock = ?", (memo_number, stock))
+def edit_trade(trade_data):
+    """
+    Enhanced edit trade function with improved UI and validation
+    """
+    st.subheader("✏️ Edit Trade")
+    
+    # Create two columns for better layout
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Basic Information
+        # Convert date string to datetime object, handling multiple formats
+        try:
+            # First try the SQL format
+            date_obj = datetime.strptime(trade_data['Date'], '%Y-%m-%d')
+        except ValueError:
+            try:
+                # Then try the displayed format
+                date_obj = datetime.strptime(trade_data['Date'], '%B %d, %Y')
+            except ValueError:
+                # If all else fails, use today's date
+                date_obj = datetime.now()
+                st.warning(f"Could not parse date '{trade_data['Date']}'. Using current date instead.")
         
-        # Check if the memo number still has remaining trades
-        cursor.execute("SELECT COUNT(*) FROM trades WHERE memo_number = ?", (memo_number,))
-        remaining_trades = cursor.fetchone()[0]
-
-        # If no trades remain under this memo, delete the memo entry too
-        if remaining_trades == 0:
-            cursor.execute("DELETE FROM memos WHERE memo_number = ?", (memo_number,))
+        new_date = st.date_input(
+            "Trade Date",
+            value=date_obj,
+            help="Date of the trade"
+        )
         
-        cursor.execute("COMMIT")
-        return True
-    except sqlite3.Error as e:
-        cursor.execute("ROLLBACK")
-        st.error(f"Error deleting trade: {str(e)}")
-        return False
-    finally:
-        conn.close()
-
-def delete_dividend(warrant_no):
-    """Deletes a dividend record and its associated warrant."""
-    conn = sqlite3.connect("portfolio.db")
-    cursor = conn.cursor()
-    try:
-        cursor.execute("BEGIN TRANSACTION")
-        # Delete dividend record
-        cursor.execute("DELETE FROM dividends WHERE warrant_no = ?", (warrant_no,))
-        # Delete associated warrant
-        cursor.execute("DELETE FROM warrants WHERE warrant_no = ?", (warrant_no,))
-        cursor.execute("COMMIT")
-        return True
-    except sqlite3.Error as e:
-        cursor.execute("ROLLBACK")
-        st.error(f"Error deleting dividend: {str(e)}")
-        return False
-    finally:
-        conn.close()
+        new_stock = st.text_input(
+            "Stock Name",
+            value=trade_data['Stock'],
+            help="Name of the stock"
+        )
+        
+        new_shares = st.number_input(
+            "Number of Shares",
+            min_value=1,
+            value=int(str(trade_data['Shares']).replace(',', '')),
+            help="Number of shares traded"
+        )
+        
+        new_rate = st.number_input(
+            "Rate per Share (Rs.)",
+            min_value=0.01,
+            value=float(str(trade_data['Rate']).replace('Rs. ', '').replace(',', '')),
+            format="%.2f",
+            help="Price per share"
+        )
+    
+    with col2:
+        # Charges and Taxes
+        new_commission = st.number_input(
+            "Commission (Rs.)",
+            min_value=0.0,
+            value=float(str(trade_data['Commission']).replace('Rs. ', '').replace(',', '')),
+            format="%.2f",
+            help="Broker's commission"
+        )
+        
+        new_cdc = st.number_input(
+            "CDC Charges (Rs.)",
+            min_value=0.0,
+            value=float(str(trade_data['CDC Charges']).replace('Rs. ', '').replace(',', '')),
+            format="%.2f",
+            help="CDC charges"
+        )
+        
+        new_tax = st.number_input(
+            "Sales Tax (Rs.)",
+            min_value=0.0,
+            value=float(str(trade_data['Sales Tax']).replace('Rs. ', '').replace(',', '')),
+            format="%.2f",
+            help="Sales tax amount"
+        )
+    
+    # Calculate new total
+    new_total = (new_rate * new_shares) + new_commission + new_cdc + new_tax
+    
+    # Display summary of changes
+    st.subheader("Transaction Summary")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric(
+            "Total Shares",
+            f"{new_shares:,}",
+            delta=f"{new_shares - int(str(trade_data['Shares']).replace(',', ''))}"
+        )
+    with col2:
+        st.metric(
+            "Rate",
+            f"Rs. {new_rate:,.2f}",
+            delta=f"Rs. {new_rate - float(str(trade_data['Rate']).replace('Rs. ', '').replace(',', '')):,.2f}"
+        )
+    with col3:
+        st.metric(
+            "Total Amount",
+            f"Rs. {new_total:,.2f}",
+            delta=f"Rs. {new_total - float(str(trade_data['Total Amount']).replace('Rs. ', '').replace(',', '')):,.2f}"
+        )
+    
+    # Add divider for visual separation
+    st.divider()
+    
+    # Action buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("💾 Save Changes", type="primary"):
+            # Validate changes
+            if not new_stock.strip():
+                st.error("Stock name cannot be empty!")
+                return False
+                
+            # Update database
+            conn = sqlite3.connect("portfolio.db")
+            cursor = conn.cursor()
+            
+            try:
+                cursor.execute("""
+                    UPDATE trades
+                    SET date = ?,
+                        stock = ?,
+                        quantity = ?,
+                        rate = ?,
+                        comm_amount = ?,
+                        cdc_charges = ?,
+                        sales_tax = ?,
+                        total_amount = ?
+                    WHERE memo_number = ? AND stock = ?
+                """, (
+                    new_date.strftime('%Y-%m-%d'),
+                    new_stock,
+                    new_shares,
+                    new_rate,
+                    new_commission,
+                    new_cdc,
+                    new_tax,
+                    new_total,
+                    trade_data['Memo No'],
+                    trade_data['Stock']
+                ))
+                
+                conn.commit()
+                st.success("✅ Trade updated successfully!")
+                return True
+                
+            except sqlite3.Error as e:
+                conn.rollback()
+                st.error(f"Database error: {str(e)}")
+                return False
+                
+            finally:
+                conn.close()
+    
+    with col2:
+        if st.button("❌ Cancel"):
+            return True
+    
+    return False
 
 def view_trades():
-    """Displays both trade transactions and dividend warrants stored in the database with delete functionality."""
-    st.header("📊 Portfolio Transactions")
+    """Enhanced view trades function with improved edit functionality"""
+    st.header("📊 View Trades")
     
-    # Initialize session state for deletion confirmation
-    if 'delete_trade_id' not in st.session_state:
-        st.session_state.delete_trade_id = None
-    if 'delete_trade_stock' not in st.session_state:
-        st.session_state.delete_trade_stock = None
-    if 'delete_dividend_id' not in st.session_state:
-        st.session_state.delete_dividend_id = None
+    # Initialize session state for editing
+    if 'editing_trade' not in st.session_state:
+        st.session_state.editing_trade = None
     
+    # Fetch trades from database
     conn = sqlite3.connect("portfolio.db")
-    
-    # Fetch and display trade transactions
-    st.subheader("📌 Trade Transactions")
-    trade_query = """
+    query = """
         SELECT 
             date as 'Date',
             memo_number as 'Memo No',
@@ -78,113 +189,115 @@ def view_trades():
         FROM trades
         ORDER BY date DESC
     """
-    trade_df = pd.read_sql(trade_query, conn)
     
-    if trade_df.empty:
-        st.warning("No trade transactions found.")
-    else:
+    try:
+        df = pd.read_sql_query(query, conn)
+        
+        if df.empty:
+            st.warning("No trades found in the database.")
+            return
+            
         # Format numeric columns
+        df['Shares'] = df['Shares'].apply(lambda x: f"{int(x):,}")
         numeric_cols = ['Rate', 'Commission', 'CDC Charges', 'Sales Tax', 'Total Amount']
         for col in numeric_cols:
-            if col in trade_df.columns:
-                trade_df[col] = trade_df[col].round(2)
-                trade_df[col] = trade_df[col].apply(lambda x: f"Rs. {x:,.2f}")
+            df[col] = df[col].apply(lambda x: f"Rs. {x:,.2f}")
         
-        # Format shares column
-        trade_df['Shares'] = trade_df['Shares'].apply(lambda x: f"{x:,}")
-        
-        # Display the dataframe
-        st.dataframe(trade_df, hide_index=True)
-        
-        # Add delete buttons below the table
-        st.write("Select a trade to delete:")
-        for i, row in trade_df.iterrows():
-            col1, col2 = st.columns([0.9, 0.1])
-            with col1:
-                st.write(f"{row['Date']} - {row['Stock']} ({row['Shares']} shares)")
-            with col2:
-                if st.button("🗑️", key=f"delete_trade_{row['Memo No']}_{row['Stock']}"):
-                    st.session_state.delete_trade_id = row['Memo No']
-                    st.session_state.delete_trade_stock = row['Stock']
-                    st.rerun()
-        
-        # Handle delete confirmation
-        if st.session_state.delete_trade_id and st.session_state.delete_trade_stock:
-            st.info(f"Are you sure you want to delete **{st.session_state.delete_trade_stock}** under memo `{st.session_state.delete_trade_id}`?")
+        # If not editing, show the table with edit buttons
+        if st.session_state.editing_trade is None:
+            st.write("### Trade History")
+            
+            # Display each trade with action buttons
+            for idx, row in df.iterrows():
+                with st.container():
+                    col1, col2, col3 = st.columns([0.7, 0.15, 0.15])
+                    
+                    with col1:
+                        st.write(f"{row['Date']} - {row['Stock']} ({row['Shares']} shares @ {row['Rate']})")
+                    
+                    with col2:
+                        if st.button("✏️ Edit", key=f"edit_{idx}"):
+                            st.session_state.editing_trade = row.to_dict()
+                            st.rerun()
+                    
+                    with col3:
+                        if st.button("🗑️ Delete", key=f"delete_{idx}"):
+                            st.session_state.confirm_delete = f"{row['Memo No']}_{row['Stock']}"
+                            st.rerun()
+                    
+                    # Show delete confirmation if this is the row being deleted
+                    if st.session_state.get('confirm_delete') == f"{row['Memo No']}_{row['Stock']}":
+                        st.warning(f"Are you sure you want to delete this trade for **{row['Stock']}**?")
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            if st.button("✅ Yes, Delete", key=f"confirm_delete_{idx}"):
+                                if delete_trade(row['Memo No'], row['Stock']):
+                                    st.success(f"Successfully deleted trade for {row['Stock']}")
+                                    st.session_state.confirm_delete = None
+                                    st.rerun()
+                        with col2:
+                            if st.button("❌ No, Cancel", key=f"cancel_delete_{idx}"):
+                                st.session_state.confirm_delete = None
+                                st.rerun()
+                
+                st.divider()
+            
+            # Add summary metrics
+            st.subheader("Portfolio Summary")
+            total_investment = sum(float(str(val).replace('Rs. ', '').replace(',', '')) 
+                                 for val in df['Total Amount'])
+            total_shares = sum(int(str(val).replace(',', '')) for val in df['Shares'])
+            
             col1, col2 = st.columns(2)
             with col1:
-                if st.button("✅ Confirm Delete", key=f"confirm_trade"):
-                    if delete_trade(st.session_state.delete_trade_id, st.session_state.delete_trade_stock):
-                        st.success(f"Trade for **{st.session_state.delete_trade_stock}** deleted successfully!")
-                        st.session_state.delete_trade_id = None
-                        st.session_state.delete_trade_stock = None
-                        st.rerun()
+                st.metric("Total Investment", f"Rs. {total_investment:,.2f}")
             with col2:
-                if st.button("❌ Cancel", key=f"cancel_trade"):
-                    st.session_state.delete_trade_id = None
-                    st.session_state.delete_trade_stock = None
-                    st.rerun()
-    
-    st.divider()
-    
-    # Fetch and display dividend warrants
-    st.subheader("💰 Dividend Warrants")
-    dividend_query = """
-        SELECT 
-            d.warrant_no as 'Warrant No',
-            d.payment_date as 'Payment Date',
-            d.stock_name as 'Stock',
-            d.rate_per_security as 'Rate/Share',
-            d.number_of_securities as 'Shares',
-            d.amount_of_dividend as 'Gross Amount',
-            d.tax_deducted as 'Tax',
-            d.amount_paid as 'Net Amount'
-        FROM dividends d
-        JOIN warrants w ON d.warrant_no = w.warrant_no
-        ORDER BY d.payment_date DESC
-    """
-    dividend_df = pd.read_sql(dividend_query, conn)
-    
-    if dividend_df.empty:
-        st.warning("No dividend warrants found.")
-    else:
-        # Format numeric columns
-        numeric_cols = ['Rate/Share', 'Gross Amount', 'Tax', 'Net Amount']
-        for col in numeric_cols:
-            if col in dividend_df.columns:
-                dividend_df[col] = dividend_df[col].round(2)
-                dividend_df[col] = dividend_df[col].apply(lambda x: f"Rs. {x:,.2f}")
+                st.metric("Total Shares", f"{total_shares:,}")
         
-        # Format shares column
-        dividend_df['Shares'] = dividend_df['Shares'].apply(lambda x: f"{x:,}")
-        
-        # Display the dataframe
-        st.dataframe(dividend_df, hide_index=True)
-        
-        # Add delete buttons below the table
-        st.write("Select a dividend to delete:")
-        for i, row in dividend_df.iterrows():
-            col1, col2 = st.columns([0.9, 0.1])
-            with col1:
-                st.write(f"{row['Payment Date']} - {row['Stock']} ({row['Shares']} shares)")
-            with col2:
-                if st.button("🗑️", key=f"delete_div_{row['Warrant No']}"):
-                    st.session_state.delete_dividend_id = row['Warrant No']
-                    st.rerun()
-        
-        # Handle delete button clicks
-        if st.session_state.delete_dividend_id:
-            st.info(f"Are you sure you want to delete the dividend with warrant number {st.session_state.delete_dividend_id}?")
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("✅ Confirm Delete", key=f"confirm_dividend"):
-                    if delete_dividend(st.session_state.delete_dividend_id):
-                        st.success("Dividend deleted successfully!")
-                        st.session_state.delete_dividend_id = None
-                        st.rerun()
-            with col2:
-                if st.button("❌ Cancel", key=f"cancel_dividend"):
-                    st.session_state.delete_dividend_id = None
-                    st.rerun()
+        # If editing, show the edit form
+        else:
+            if edit_trade(st.session_state.editing_trade):
+                st.session_state.editing_trade = None
+                st.rerun()
     
-    conn.close()
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
+    
+    finally:
+        conn.close()
+
+def delete_trade(memo_number, stock):
+    """Delete a trade from the database"""
+    
+    conn = sqlite3.connect("portfolio.db")
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute("BEGIN TRANSACTION")
+        cursor.execute(
+            "DELETE FROM trades WHERE memo_number = ? AND stock = ?",
+            (memo_number, stock)
+        )
+        
+        # Check if any trades remain for this memo
+        cursor.execute(
+            "SELECT COUNT(*) FROM trades WHERE memo_number = ?",
+            (memo_number,)
+        )
+        if cursor.fetchone()[0] == 0:
+            cursor.execute(
+                "DELETE FROM memos WHERE memo_number = ?",
+                (memo_number,)
+            )
+        
+        cursor.execute("COMMIT")
+        st.session_state.confirm_delete = None
+        return True
+        
+    except sqlite3.Error as e:
+        cursor.execute("ROLLBACK")
+        st.error(f"Error deleting trade: {str(e)}")
+        return False
+        
+    finally:
+        conn.close()

@@ -43,6 +43,14 @@ def extract_memo_number(text):
     match = re.search(r"Memo\s*#\s*(\d+/\w+)", text, re.IGNORECASE)
     return match.group(1) if match else None
 
+def clean_stock_name(stock_name):
+    """Cleans the stock name by removing 'Ready' suffix and extra whitespace."""
+    if isinstance(stock_name, str):
+        # Remove 'Ready' suffix and trim whitespace
+        cleaned = stock_name.split('Ready')[0].strip()
+        return cleaned
+    return stock_name
+
 def extract_trade_details_with_llm(text):
     """Extracts structured trade details from raw text using GPT4ALL with enforced JSON output."""
     try:
@@ -78,12 +86,19 @@ def extract_trade_details_with_llm(text):
             if match:
                 json_data = match.group(0)
 
-                # 🔹 Apply Fix: Clean JSON numbers
+                # Clean JSON numbers
                 json_data = clean_json_output(json_data)
 
                 if json_data and validate_json_structure(json_data):
                     parsed_data = json_data
-                    parsed_data["memo_number"] = memo_number  # Ensure memo number is included
+                    parsed_data["memo_number"] = memo_number
+
+                    # Clean stock names in the parsed data
+                    if 'trades' in parsed_data:
+                        for trade in parsed_data['trades']:
+                            if 'stock' in trade:
+                                trade['stock'] = clean_stock_name(trade['stock'])
+
                     return parsed_data
                 else:
                     st.error("❌ JSON validation failed. Check LLM response format.")
@@ -106,19 +121,20 @@ def extract_raw_text(pdf_file):
 
 def insert_trade(date, memo_number, stock, quantity, rate, comm_amount, cdc_charges, sales_tax, total_amount, trade_type):
     """Inserts a trade record into the database with retry logic to handle locked database issues."""
+    max_retries = 5
+    retry_delay = 1
 
-    max_retries = 5  # Prevents infinite looping
-    retry_delay = 1  # Wait time before retrying
+    # Clean the stock name before insertion
+    stock = clean_stock_name(stock)
 
     for attempt in range(max_retries):
         conn = sqlite3.connect("portfolio.db", timeout=10)
         cursor = conn.cursor()
 
         try:
-            cursor.execute("PRAGMA journal_mode=WAL;")  # Use WAL mode to prevent locking
+            cursor.execute("PRAGMA journal_mode=WAL;")
 
-            # Ensure total_amount is converted properly to float (removes comma formatting errors)
-            total_amount = float(str(total_amount).replace(",", ""))  
+            total_amount = float(str(total_amount).replace(",", ""))
 
             cursor.execute("""
                 INSERT INTO trades (date, memo_number, stock, quantity, rate, comm_amount, cdc_charges, sales_tax, total_amount, type) 
@@ -126,21 +142,21 @@ def insert_trade(date, memo_number, stock, quantity, rate, comm_amount, cdc_char
             """, (date, memo_number, stock, quantity, rate, comm_amount, cdc_charges, sales_tax, total_amount, trade_type))
 
             conn.commit()
-            return  # If successful, exit function
+            return
 
         except sqlite3.OperationalError as e:
             if "database is locked" in str(e).lower():
                 st.warning(f"Database is locked. Retrying in {retry_delay} second(s)... ({attempt+1}/{max_retries})")
-                time.sleep(retry_delay)  # Wait and retry
+                time.sleep(retry_delay)
             else:
                 st.error(f"Database error: {str(e)}")
-                break  # Exit loop on non-lock errors
+                break
 
         finally:
-            conn.close()  # Ensure the connection is always closed
+            conn.close()
 
     st.error("❌ Could not insert trade after multiple attempts due to database locking.")
-
+    
 def process_trade_receipt():
     """Handles the Streamlit UI for trade receipt uploads."""
     st.header("Upload Trade Receipt")

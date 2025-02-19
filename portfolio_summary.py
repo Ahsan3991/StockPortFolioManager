@@ -2,15 +2,14 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
-import json
 import plotly.express as px
-from streamlit.components.v1 import html
+
 
 def get_portfolio_positions():
     """Gets current position for all stocks."""
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
-    
+
     try:
         # Get buy positions
         cursor.execute("""
@@ -28,7 +27,7 @@ def get_portfolio_positions():
             'avg_price': row[2],
             'investment': row[3]
         } for row in cursor.fetchall()}
-        
+
         # Get sell positions
         cursor.execute("""
             SELECT 
@@ -44,7 +43,7 @@ def get_portfolio_positions():
             'total_sales': row[2],
             'total_tax': row[3]
         } for row in cursor.fetchall()}
-        
+
         # Calculate current positions
         positions = []
         for stock in buy_positions:
@@ -54,7 +53,7 @@ def get_portfolio_positions():
                 'total_sales': 0,
                 'total_tax': 0
             })
-            
+
             remaining = buy_data['total_bought'] - sell_data['total_sold']
             if remaining > 0:
                 positions.append({
@@ -68,10 +67,87 @@ def get_portfolio_positions():
                     'Total Sales': sell_data['total_sales'],
                     'Total Tax': sell_data['total_tax']
                 })
-        
+
         return positions
     finally:
         conn.close()
+
+
+def portfolio_distribution():
+    """Displays the portfolio distribution with multiple options (Shares vs Wealth)."""
+    positions = get_portfolio_positions()
+
+    if not positions:
+        st.warning("No active positions found in portfolio.")
+        return
+
+    df = pd.DataFrame(positions)
+    df.rename(columns={'Remaining': 'Shares'}, inplace=True)
+
+    total_shares = df['Shares'].sum()
+    total_investment = df['Total Investment'].sum()
+
+    # Dropdown menu for selecting distribution type
+    distribution_type = st.selectbox(
+        "Select Distribution Type",
+        ["Share Distribution", "Wealth Distribution"]
+    )
+
+    # Calculate percentages safely
+    df = df.copy()  # Avoids SettingWithCopyWarning
+    if distribution_type == "Share Distribution":
+        df['Percentage'] = (df['Shares'] / total_shares * 100) if total_shares > 0 else 0
+        values_column = "Shares"
+        title = f"Portfolio Distribution (Total Shares: {total_shares:,})"
+    else:
+        df['Percentage'] = (df['Total Investment'] / total_investment * 100) if total_investment > 0 else 0
+        values_column = "Total Investment"
+        title = f"Wealth Distribution (Total Investment: Rs. {total_investment:,.2f})"
+
+    # Ensure Percentage column exists before using it in Plotly
+    df['Percentage'] = df['Percentage'].astype(float)  # Ensures it's a float before formatting
+
+    # Create Pie Chart
+    fig = px.pie(
+        df,
+        values=values_column,
+        names="Stock",
+        title=title,
+        hover_data={'Percentage': ':.2f'},
+        custom_data=['Percentage']
+    )
+
+    # Update hover format
+    fig.update_traces(
+        hovertemplate="<b>%{label}</b><br>" +
+                     "Value: %{value:,.2f}<br>" +
+                     "Percentage: %{customdata[0]:.2f}%<br>" +
+                     "<extra></extra>"
+    )
+    
+    # Increase pie chart size for better visibility
+    fig.update_layout(
+        showlegend=True,
+        height=500,  # Increased from default (~400)
+        width=800,   # Increased width for better proportions
+        margin=dict(t=50, b=0, l=0, r=0)
+    )
+
+    # Show Pie Chart
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Display Table Below Pie Chart
+    st.subheader("Distribution Details")
+    distribution_df = df[['Stock', values_column, 'Percentage']].copy()
+    distribution_df[values_column] = distribution_df[values_column].apply(
+        lambda x: f"Rs. {x:,.2f}" if distribution_type == "Wealth Distribution" else f"{int(x):,}"
+    )
+    distribution_df['Percentage'] = distribution_df['Percentage'].apply(lambda x: f"{x:.2f}%")
+
+    st.dataframe(distribution_df, hide_index=True)
+
+
+
 
 def calculate_realized_pl():
     """Calculates realized profit/loss from completed sales."""
@@ -148,6 +224,7 @@ def calculate_realized_pl():
     finally:
         conn.close()
 
+
 def calculate_total_dividends():
     """Calculates total dividends earned per stock."""
     conn = sqlite3.connect("portfolio.db")
@@ -173,6 +250,7 @@ def calculate_total_dividends():
         } for row in cursor.fetchall()}
     finally:
         conn.close()
+
 
 def view_dividend_income():
     """Displays dividend income summary along with a line chart of dividends over time."""
@@ -206,7 +284,6 @@ def view_dividend_income():
         # Display raw dividend data
         st.write("### Dividend Details")
         st.dataframe(dividend_df.style.format({"Net Dividend": "Rs. {:.2f}"}), hide_index=True)
-
 def view_portfolio_summary():
     """Displays comprehensive portfolio summary with P/L and dividends."""
     st.header("📊 Portfolio Summary")
@@ -234,73 +311,9 @@ def view_portfolio_summary():
             
             st.dataframe(df, hide_index=True)
             
-            # Add Portfolio Distribution Pie Chart
+            # Add Portfolio Distribution Pie Chart with Dropdown Options
             st.subheader("Portfolio Distribution")
-            
-            # Prepare data for pie chart
-            pie_data = []
-            total_shares = 0
-            
-            # Convert string numbers back to numeric for calculations
-            for pos in positions:
-                shares = pos['Remaining']  # This is already numeric from your query
-                total_shares += shares
-                pie_data.append({
-                    'Stock': pos['Stock'],
-                    'Shares': shares,
-                    'Percentage': 0  # Will calculate after getting total
-                })
-            
-            # Calculate percentages
-            for item in pie_data:
-                item['Percentage'] = (item['Shares'] / total_shares * 100) if total_shares > 0 else 0
-            
-            # Create pie chart using plotly
-            fig = px.pie(
-                pie_data,
-                values='Shares',
-                names='Stock',
-                title=f'Portfolio Distribution (Total Shares: {total_shares:,})',
-                hover_data=['Percentage'],
-                custom_data=['Percentage']
-            )
-            
-            # Update hover template to show shares and percentage
-            fig.update_traces(
-                hovertemplate="<b>%{label}</b><br>" +
-                             "Shares: %{value:,.0f}<br>" +
-                             "Percentage: %{customdata[0]:.2f}%<br>" +
-                             "<extra></extra>"
-            )
-            
-            # Update layout
-            fig.update_layout(
-                showlegend=True,
-                height=250,
-                margin=dict(t=50, b=0, l=0, r=0)
-            )
-            
-            # Display the chart
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # Show distribution details in a table
-            st.subheader("Distribution Details")
-            distribution_df = pd.DataFrame([{
-                'Stock': d['Stock'],
-                'Shares': f"{int(d['Shares']):,}",
-                'Percentage': f"{d['Percentage']:.2f}%"
-            } for d in pie_data])
-            st.dataframe(distribution_df, hide_index=True)
-            
-            # Position Summary
-            total_value = sum(pos['Current Value'] for pos in positions)
-            total_investment = sum(pos['Total Investment'] for pos in positions)
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("Portfolio Value", f"Rs. {total_value:,.2f}")
-            with col2:
-                st.metric("Total Investment", f"Rs. {total_investment:,.2f}")
+            portfolio_distribution()
     
     with tab2:
         realized_pl = calculate_realized_pl()
