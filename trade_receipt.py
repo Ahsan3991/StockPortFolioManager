@@ -156,7 +156,7 @@ def insert_trade(date, memo_number, stock, quantity, rate, comm_amount, cdc_char
             conn.close()
 
     st.error("❌ Could not insert trade after multiple attempts due to database locking.")
-    
+
 def process_trade_receipt():
     """Handles the Streamlit UI for trade receipt uploads."""
     st.header("Upload Trade Receipt")
@@ -221,7 +221,7 @@ def process_trade_receipt():
 
 # ✅ **Manual Entry UI**
 def manual_trade_entry():
-    """Allows manual entry of multiple trades under the same memo number with correct date format."""
+    """Allows manual entry of multiple trades under the same memo number with improved UX."""
     st.header("Manual Trade Entry")
     
     # Initialize session state variables
@@ -240,14 +240,14 @@ def manual_trade_entry():
             st.session_state.current_memo = memo_number
     else:
         st.success(f"📌 Adding trades under Memo: {st.session_state.current_memo}")
-        memo_number = st.session_state.current_memo  # Use the stored memo number
+        memo_number = st.session_state.current_memo
 
     # Trade Details Input
     col1, col2 = st.columns(2)
 
     with col1:
         purchase_date = st.date_input("Date of Purchase (Required)", help="Select the date when the trade was executed")
-        formatted_date = purchase_date.strftime('%B %d, %Y')  # Format to "Month Day, Year"
+        formatted_date = purchase_date.strftime('%B %d, %Y')
         stock_name = st.text_input("Stock Name (Required)", help="Enter the name of the stock")
         number_of_stocks = st.number_input("Number of Shares (Required)", min_value=1, format="%d", help="Enter the total number of shares")
 
@@ -272,77 +272,133 @@ def manual_trade_entry():
     with col3:
         st.metric("Total Amount", f"Rs. {total_amount:,.2f}")
 
-    # Add Trade to List
-    if st.button("➕ Add Another Trade"):
-        trade_data = {
-            'memo_number': memo_number,
-            'purchase_date': formatted_date,  # Store date in "Month Day, Year" format
-            'stock_name': stock_name,
-            'number_of_stocks': number_of_stocks,
-            'rate_per_share': rate_per_share,
-            'commission_charges': commission_charges,
-            'cdc_charges': cdc_charges,
-            'sales_tax': sales_tax,
-            'total_amount': total_amount
-        }
-        st.session_state.trades_list.append(trade_data)
-        st.success(f"✅ Added {stock_name} to the memo {memo_number}")
+    # Action buttons container
+    button_col1, button_col2, button_col3 = st.columns([1, 1, 1])
 
-    # **Submit All Trades Button (Always Visible)**
-    if st.button("✅ Submit All Trades", disabled=not st.session_state.trades_list):
-        conn = sqlite3.connect("portfolio.db")
-        cursor = conn.cursor()
+    with button_col1:
+        # Add Another Trade button
+        if st.button("➕ Add Another Trade"):
+            # Validate current trade data
+            if not memo_number or not stock_name or rate_per_share <= 0:
+                st.error("Please fill in all required fields before adding another trade.")
+                return
 
-        try:
-            cursor.execute("BEGIN TRANSACTION")
+            trade_data = {
+                'memo_number': memo_number,
+                'purchase_date': formatted_date,
+                'stock_name': stock_name,
+                'number_of_stocks': number_of_stocks,
+                'rate_per_share': rate_per_share,
+                'commission_charges': commission_charges,
+                'cdc_charges': cdc_charges,
+                'sales_tax': sales_tax,
+                'total_amount': total_amount
+            }
+            st.session_state.trades_list.append(trade_data)
+            st.success(f"✅ Added {stock_name} to the memo {memo_number}")
 
-            # Ensure memo is added only once
-            cursor.execute("INSERT INTO memos (memo_number) VALUES (?)", (st.session_state.current_memo,))
+    with button_col2:
+        # Submit button - always visible
+        if st.button("✅ Submit Trade(s)", type="primary"):
+            # Validate current trade
+            if not memo_number or not stock_name or rate_per_share <= 0:
+                st.error("Please fill in all required fields.")
+                return
 
-            # Insert all trades under this memo
-            for trade in st.session_state.trades_list:
-                cursor.execute("""
-                    INSERT INTO trades (date, memo_number, stock, quantity, rate, comm_amount, cdc_charges, sales_tax, total_amount, type)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    trade['purchase_date'],
-                    trade['memo_number'],
-                    trade['stock_name'],
-                    trade['number_of_stocks'],
-                    trade['rate_per_share'],
-                    trade['commission_charges'],
-                    trade['cdc_charges'],
-                    trade['sales_tax'],
-                    trade['total_amount'],
-                    "Buy"
-                ))
+            # Add current trade to list if not empty
+            if stock_name and rate_per_share > 0:
+                current_trade = {
+                    'memo_number': memo_number,
+                    'purchase_date': formatted_date,
+                    'stock_name': stock_name,
+                    'number_of_stocks': number_of_stocks,
+                    'rate_per_share': rate_per_share,
+                    'commission_charges': commission_charges,
+                    'cdc_charges': cdc_charges,
+                    'sales_tax': sales_tax,
+                    'total_amount': total_amount
+                }
+                if current_trade not in st.session_state.trades_list:
+                    st.session_state.trades_list.append(current_trade)
 
-            cursor.execute("COMMIT")
-            st.success(f"✅ All trades under Memo {st.session_state.current_memo} have been saved!")
+            conn = sqlite3.connect("portfolio.db")
+            cursor = conn.cursor()
 
-            # Reset session state
+            try:
+                cursor.execute("BEGIN TRANSACTION")
+
+                # Ensure memo is added only once
+                cursor.execute("INSERT INTO memos (memo_number) VALUES (?)", (memo_number,))
+
+                # Insert all trades under this memo
+                trades_to_insert = st.session_state.trades_list if st.session_state.trades_list else [current_trade]
+                
+                for trade in trades_to_insert:
+                    cursor.execute("""
+                        INSERT INTO trades (
+                            date, memo_number, stock, quantity, rate, 
+                            comm_amount, cdc_charges, sales_tax, total_amount, type
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        trade['purchase_date'],
+                        trade['memo_number'],
+                        clean_stock_name(trade['stock_name']),
+                        trade['number_of_stocks'],
+                        trade['rate_per_share'],
+                        trade['commission_charges'],
+                        trade['cdc_charges'],
+                        trade['sales_tax'],
+                        trade['total_amount'],
+                        "Buy"
+                    ))
+
+                cursor.execute("COMMIT")
+                st.success(f"✅ Trade(s) under Memo {memo_number} have been saved!")
+
+                # Reset session state and form
+                st.session_state.trades_list = []
+                st.session_state.current_memo = None
+                
+                # Clear all form inputs by resetting their keys in session state
+                for key in st.session_state.keys():
+                    if key.startswith(('stock_name_', 'rate_', 'shares_', 'commission_', 'cdc_', 'tax_')):
+                        del st.session_state[key]
+                
+                # Add a button to start a new trade
+                if st.button("➕ Add New Trade", type="primary"):
+                    st.rerun()
+                
+                # Show Updated Trades
+                if st.session_state.get('show_trades', False):
+                    display_trades()
+                    
+                # Automatically rerun to clear the form
+                time.sleep(1)  # Give user time to see success message
+                st.rerun()
+
+            except sqlite3.Error as e:
+                cursor.execute("ROLLBACK")
+                st.error(f"❌ Failed to save trades: {str(e)}")
+            finally:
+                conn.close()
+
+    with button_col3:
+        # Cancel button
+        if st.button("❌ Cancel"):
             st.session_state.trades_list = []
             st.session_state.current_memo = None
+            st.warning("Trade entry canceled.")
+            st.rerun()
 
-            # 🔹 Show Updated Trades Immediately
-            display_trades()
+    # Show number of trades added so far
+    if st.session_state.trades_list:
+        st.info(f"🔄 {len(st.session_state.trades_list)} trade(s) ready to submit under memo {memo_number}")
 
-        except sqlite3.Error as e:
-            cursor.execute("ROLLBACK")
-            st.error(f"❌ Failed to save trades: {str(e)}")
-        finally:
-            conn.close()
-
-    # Cancel Button
-    if st.button("❌ Cancel"):
-        st.session_state.trades_list = []
-        st.session_state.current_memo = None
-        st.warning("Trade entry canceled.")
-
-    # ✅ Option to View Trades Anytime
-    if st.checkbox("📜 View Existing Trades"):
+    # Option to View Trades
+    show_trades = st.checkbox("📜 View Existing Trades", value=st.session_state.get('show_trades', False))
+    st.session_state.show_trades = show_trades
+    if show_trades:
         display_trades()
-
 
 def display_trades():
     """Displays all stored trades in a table format."""

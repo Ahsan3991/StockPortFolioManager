@@ -165,8 +165,23 @@ def edit_trade(trade_data):
     return False
 
 def view_trades():
-    """Enhanced view trades function with improved edit functionality"""
+    """Enhanced view trades function with improved edit functionality and search"""
     st.header("📊 View Trades")
+    
+    # Add search functionality
+    search_col1, search_col2 = st.columns([0.3, 0.7])
+    with search_col1:
+        search_type = st.selectbox(
+            "Search By",
+            ["Stock Name", "Memo Number", "Date"],
+            help="Select search criteria"
+        )
+    with search_col2:
+        search_text = st.text_input(
+            "🔍 Search...",
+            placeholder=f"Enter {search_type.lower()} to search",
+            help=f"Enter {search_type.lower()} to filter trades"
+        )
     
     # Initialize session state for editing
     if 'editing_trade' not in st.session_state:
@@ -192,6 +207,24 @@ def view_trades():
     
     try:
         df = pd.read_sql_query(query, conn)
+        
+        # Apply search filter if search text is provided
+        if search_text:
+            search_text = search_text.strip().lower()
+            if search_type == "Stock Name":
+                df = df[df['Stock'].str.lower().str.contains(search_text, na=False)]
+            elif search_type == "Memo Number":
+                df = df[df['Memo No'].str.lower().str.contains(search_text, na=False)]
+            elif search_type == "Date":
+                df = df[df['Date'].str.lower().str.contains(search_text, na=False)]
+                
+        # Show search results summary
+        if search_text:
+            if len(df) > 0:
+                st.success(f"Found {len(df)} matching trades for '{search_text}'")
+            else:
+                st.warning(f"No trades found matching '{search_text}'")
+                return
         
         if df.empty:
             st.warning("No trades found in the database.")
@@ -265,7 +298,7 @@ def view_trades():
     
     finally:
         conn.close()
-
+        
 def delete_trade(memo_number, stock):
     """Delete a trade from the database"""
     
