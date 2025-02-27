@@ -2,8 +2,14 @@
 import requests
 import sqlite3
 from datetime import datetime
+import os
+from dotenv import load_dotenv
 
-API_KEY = "goldapi-2jph417m7lspbqz-io"  # Replace with your actual GoldAPI key
+# Load environment variables
+load_dotenv()
+
+# Retrieve API key from .env file
+API_KEY = os.getenv("GOLDAPI_KEY")
 
 def fetch_metal_prices():
     """Fetch real-time metal prices and store them in the database."""
