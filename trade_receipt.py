@@ -1,3 +1,4 @@
+#trade receipt
 import streamlit as st
 import sqlite3
 import pdfplumber
@@ -189,7 +190,7 @@ def process_trade_receipt():
                 cursor.execute("BEGIN TRANSACTION")
 
                 # Insert memo first
-                cursor.execute("INSERT INTO memos (memo_number) VALUES (?)", (memo_number,))
+               # cursor.execute("INSERT INTO memos (memo_number) VALUES (?)", (memo_number,))
 
                 # Insert all trades (directly, without calling `insert_trade`)
                 for trade in trades:
@@ -221,41 +222,49 @@ def process_trade_receipt():
 
 # ✅ **Manual Entry UI**
 def manual_trade_entry():
-    """Allows manual entry of multiple trades under the same memo number with improved UX."""
+    """Allows manual entry of multiple trades under an optional memo number."""
     st.header("Manual Trade Entry")
     
     # Initialize session state variables
     if 'trades_list' not in st.session_state:
         st.session_state.trades_list = []
-    
     if 'current_memo' not in st.session_state:
         st.session_state.current_memo = None
 
     st.subheader("Enter Trade Details")
 
-    # Memo Number (Set Once)
+    # Memo Number (Optional)
     if st.session_state.current_memo is None:
-        memo_number = st.text_input("Memo Number (Required)", help="Enter the unique memo number for this trade set")
-        if memo_number:
-            st.session_state.current_memo = memo_number
+        raw_memo_number = st.text_input(
+            "Memo Number (Optional)",
+            help="Enter the memo number if you have it; leave blank otherwise."
+        )
+        # Default to "UNKNOWN" if blank
+        if not raw_memo_number.strip():
+            raw_memo_number = "UNKNOWN"
+        st.session_state.current_memo = raw_memo_number
     else:
         st.success(f"📌 Adding trades under Memo: {st.session_state.current_memo}")
-        memo_number = st.session_state.current_memo
+
+    memo_number = st.session_state.current_memo
 
     # Trade Details Input
     col1, col2 = st.columns(2)
-
     with col1:
         purchase_date = st.date_input("Date of Purchase (Required)", help="Select the date when the trade was executed")
         formatted_date = purchase_date.strftime('%B %d, %Y')
         stock_name = st.text_input("Stock Name (Required)", help="Enter the name of the stock")
-        number_of_stocks = st.number_input("Number of Shares (Required)", min_value=1, format="%d", help="Enter the total number of shares")
-
+        number_of_stocks = st.number_input("Number of Shares (Required)", min_value=1, format="%d",
+                                          help="Enter the total number of shares")
     with col2:
-        rate_per_share = st.number_input("Rate per Share (Rs.)", min_value=0.0, format="%.4f", help="Enter the price per share")
-        commission_charges = st.number_input("Commission Charges (Rs.)", min_value=0.0, format="%.2f", help="Enter broker's commission")
-        cdc_charges = st.number_input("CDC Charges (Rs.)", min_value=0.0, format="%.2f", help="Enter CDC charges")
-        sales_tax = st.number_input("Sales Tax (Rs.)", min_value=0.0, format="%.2f", help="Enter the sales tax amount")
+        rate_per_share = st.number_input("Rate per Share (Rs.)", min_value=0.0, format="%.4f",
+                                         help="Enter the price per share")
+        commission_charges = st.number_input("Commission Charges (Rs.)", min_value=0.0, format="%.2f",
+                                             help="Enter broker's commission")
+        cdc_charges = st.number_input("CDC Charges (Rs.)", min_value=0.0, format="%.2f",
+                                      help="Enter CDC charges")
+        sales_tax = st.number_input("Sales Tax (Rs.)", min_value=0.0, format="%.2f",
+                                    help="Enter the sales tax amount")
 
     # Calculate summary
     stock_value = rate_per_share * number_of_stocks
@@ -263,23 +272,22 @@ def manual_trade_entry():
     total_amount = stock_value + total_charges
 
     st.subheader("Transaction Summary")
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
+    col_sum1, col_sum2, col_sum3 = st.columns(3)
+    with col_sum1:
         st.metric("Stock Value", f"Rs. {stock_value:,.2f}")
-    with col2:
+    with col_sum2:
         st.metric("Total Charges", f"Rs. {total_charges:,.2f}")
-    with col3:
+    with col_sum3:
         st.metric("Total Amount", f"Rs. {total_amount:,.2f}")
 
-    # Action buttons container
+    # Action buttons
     button_col1, button_col2, button_col3 = st.columns([1, 1, 1])
 
     with button_col1:
         # Add Another Trade button
         if st.button("➕ Add Another Trade"):
             # Validate current trade data
-            if not memo_number or not stock_name or rate_per_share <= 0:
+            if not stock_name or rate_per_share <= 0:
                 st.error("Please fill in all required fields before adding another trade.")
                 return
 
@@ -295,13 +303,13 @@ def manual_trade_entry():
                 'total_amount': total_amount
             }
             st.session_state.trades_list.append(trade_data)
-            st.success(f"✅ Added {stock_name} to the memo {memo_number}")
+            st.success(f"✅ Added {stock_name} to memo: {memo_number}")
 
     with button_col2:
-        # Submit button - always visible
+        # Submit button
         if st.button("✅ Submit Trade(s)", type="primary"):
             # Validate current trade
-            if not memo_number or not stock_name or rate_per_share <= 0:
+            if not stock_name or rate_per_share <= 0:
                 st.error("Please fill in all required fields.")
                 return
 
@@ -321,18 +329,14 @@ def manual_trade_entry():
                 if current_trade not in st.session_state.trades_list:
                     st.session_state.trades_list.append(current_trade)
 
+            # Insert trades into the database
             conn = sqlite3.connect("portfolio.db")
             cursor = conn.cursor()
-
             try:
                 cursor.execute("BEGIN TRANSACTION")
 
-                # Ensure memo is added only once
-                cursor.execute("INSERT INTO memos (memo_number) VALUES (?)", (memo_number,))
-
-                # Insert all trades under this memo
-                trades_to_insert = st.session_state.trades_list if st.session_state.trades_list else [current_trade]
-                
+                # Insert all trades
+                trades_to_insert = st.session_state.trades_list or [current_trade]
                 for trade in trades_to_insert:
                     cursor.execute("""
                         INSERT INTO trades (
@@ -358,22 +362,22 @@ def manual_trade_entry():
                 # Reset session state and form
                 st.session_state.trades_list = []
                 st.session_state.current_memo = None
-                
+
                 # Clear all form inputs by resetting their keys in session state
-                for key in st.session_state.keys():
+                for key in list(st.session_state.keys()):
                     if key.startswith(('stock_name_', 'rate_', 'shares_', 'commission_', 'cdc_', 'tax_')):
                         del st.session_state[key]
-                
+
                 # Add a button to start a new trade
                 if st.button("➕ Add New Trade", type="primary"):
                     st.rerun()
-                
-                # Show Updated Trades
+
+                # (Optional) Show Updated Trades
                 if st.session_state.get('show_trades', False):
                     display_trades()
-                    
+
                 # Automatically rerun to clear the form
-                time.sleep(1)  # Give user time to see success message
+                time.sleep(1)
                 st.rerun()
 
             except sqlite3.Error as e:
@@ -400,6 +404,7 @@ def manual_trade_entry():
     if show_trades:
         display_trades()
 
+#Display the trade information        
 def display_trades():
     """Displays all stored trades in a table format."""
     conn = sqlite3.connect("portfolio.db")
