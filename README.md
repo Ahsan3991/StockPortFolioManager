@@ -1,6 +1,6 @@
-# Stock Portfolio Manager 📈
+# Asset Portfolio Manager called WealthWise 📈
 
-A comprehensive web application built with Streamlit for managing your stock portfolio, tracking trades, and monitoring dividends. This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.
+A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, and monitoring dividends and keeping track of your investments. This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.
 
 ## 🌟 Features
 
