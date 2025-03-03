@@ -15,7 +15,7 @@ from db_utils import initialize_user_db, get_db_path
 # Page Configuration
 st.set_page_config(
     page_title="WealthWise",
-    page_icon="📊",  # Using an emoji instead of a file path
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -36,7 +36,14 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     
-    /* App title and subtitle styling */
+    /* Logo container styling */
+    .logo-container {
+        text-align: center;
+        margin-top: 20px;
+        margin-bottom: 20px;
+    }
+    
+    /* App title as fallback */
     .app-title {
         text-align: center;
         width: 100%;
@@ -46,7 +53,7 @@ st.markdown("""
     }
     
     .app-title h1 {
-        font-size: 3em !important;
+        font-size: 2.5em !important;
         color: white;
         font-weight: 600;
         margin-bottom: 0 !important;
@@ -148,7 +155,7 @@ st.markdown("""
     [data-testid="stSidebar"] .stSelectbox .st-bs,
     [data-testid="stSidebar"] .stSelectbox .st-bq {
         font-size: 1.8rem !important;
-        font-weight: 300 !important;
+        font-weight: 500 !important;
         margin-bottom: 0.5rem !important;
     }
     
@@ -176,9 +183,29 @@ if not st.session_state.logged_in:
     # Show login page if not logged in
     login_page()
 else:
-    # Display title and subtitle
-    st.markdown('<div class="app-title"><h1>WealthWise</h1></div>', unsafe_allow_html=True)
-    st.markdown('<div class="app-subtitle"><h2>Be Wealthy!</h2></div>', unsafe_allow_html=True)
+    # Display logo or text-based title with fallback
+    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+    
+    # Try different methods to display the logo, with fallbacks
+    try:
+        # Method 1: Using st.image with width parameter
+        logo_path = "./assets/wealthwise-logo-zip-file/svg/logo-no-background.svg"
+        if os.path.exists(logo_path):
+            st.image(logo_path, width=400)
+        else:
+            # If main logo not found, try alternative logo
+            alt_logo_path = "./assets/wealthwise-logo-zip-file/png/logo-no-background.png"
+            if os.path.exists(alt_logo_path):
+                st.image(alt_logo_path, width=400)
+            else:
+                # Fallback to text-based title
+                raise FileNotFoundError("Logo files not found")
+    except Exception as e:
+        # Fallback to text-based title if image doesn't work
+        st.markdown('<div class="app-title"><h1>WealthWise</h1></div>', unsafe_allow_html=True)
+        st.markdown('<div class="app-subtitle"><h2>Portfolio Manager</h2></div>', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Welcome message with current portfolio name
     st.markdown('<div class="welcome-section"></div>', unsafe_allow_html=True)
