@@ -1,9 +1,7 @@
 streamlit==1.31.1
 pandas==2.2.0
-pdfplumber==0.10.3
-gpt4all
-regex
 plotly==5.18.0
 python-dateutil>=2.8.2
 pytz>=2023.3
 six>=1.16.0
+regex

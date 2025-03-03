@@ -5,44 +5,10 @@ import pdfplumber
 import json
 import re
 import time
-from gpt4all import GPT4All
+#from gpt4all import GPT4All
 import pandas as pd
 from datetime import datetime
 
-def clean_json_output(json_text):
-    """Fixes common JSON formatting issues like misplaced commas in numbers."""
-    json_text = re.sub(r'(\d+),(\d+)', r'\1\2', json_text)  # Remove commas in numbers
-    
-    try:
-        parsed_data = json.loads(json_text)  # Try parsing after cleanup
-        return parsed_data
-    except json.JSONDecodeError as e:
-        print("JSON Decoding Failed:", str(e))
-        return None
-
-def validate_json_structure(parsed_data):
-    """Ensures the JSON has the correct structure."""
-    if not isinstance(parsed_data, dict):
-        return False
-    
-    required_keys = {"date", "memo_number", "trades"}
-    if not required_keys.issubset(parsed_data.keys()):
-        return False
-    
-    if not isinstance(parsed_data["trades"], list) or len(parsed_data["trades"]) == 0:
-        return False
-    
-    trade_keys = {"stock", "rate", "quantity", "comm_amount", "cdc_charges", "sales_tax", "total_amount"}
-    for trade in parsed_data["trades"]:
-        if not isinstance(trade, dict) or not trade_keys.issubset(trade.keys()):
-            return False
-    
-    return True
-
-def extract_memo_number(text):
-    """Extracts the memo number from the raw trade receipt text using regex."""
-    match = re.search(r"Memo\s*#\s*(\d+/\w+)", text, re.IGNORECASE)
-    return match.group(1) if match else None
 
 def clean_stock_name(stock_name):
     """Cleans the stock name by removing 'Ready' suffix and extra whitespace."""
@@ -52,73 +18,6 @@ def clean_stock_name(stock_name):
         return cleaned
     return stock_name
 
-def extract_trade_details_with_llm(text):
-    """Extracts structured trade details from raw text using GPT4ALL with enforced JSON output."""
-    try:
-        memo_number = extract_memo_number(text)
-        if not memo_number:
-            st.error("❌ Unable to extract memo number from the trade receipt.")
-            return {}
-
-        with GPT4All("Meta-Llama-3-8B-Instruct.Q4_0.gguf", device="cuda") as model:
-            prompt = (
-                f"Extract stock trade details from the text in JSON format.\n\n"
-                f"Ensure the response contains an object with exactly three keys: 'date', 'memo_number', and 'trades'.\n"
-                f"'date' should contain the trade date, 'memo_number' should be '{memo_number}',\n"
-                f"'trades' should be a list containing JSON objects with keys: 'stock', 'rate', 'quantity', 'comm_amount', 'cdc_charges', 'sales_tax', and 'total_amount'.\n\n"
-                f"Strict JSON format rules:\n"
-                f"- Do not add explanations or summaries.\n"
-                f"- Ensure numbers do not contain commas.\n"
-                f"- Return only JSON output.\n"
-                f"- Each trade must have all required fields.\n"
-                f"- The JSON should be properly formatted even when there are multiple trades.\n\n"
-                f"Process the following trade receipt text:\n"
-                f"{text}"
-            )
-
-            response = model.generate(prompt, temp=0, max_tokens=800)
-
-            # Debugging: Show raw response
-            st.write("### Raw LLM Response:")
-            st.text(response[:2000])
-
-            # Extract JSON from response
-            match = re.search(r'\{.*\}', response, re.DOTALL)
-            if match:
-                json_data = match.group(0)
-
-                # Clean JSON numbers
-                json_data = clean_json_output(json_data)
-
-                if json_data and validate_json_structure(json_data):
-                    parsed_data = json_data
-                    parsed_data["memo_number"] = memo_number
-
-                    # Clean stock names in the parsed data
-                    if 'trades' in parsed_data:
-                        for trade in parsed_data['trades']:
-                            if 'stock' in trade:
-                                trade['stock'] = clean_stock_name(trade['stock'])
-
-                    return parsed_data
-                else:
-                    st.error("❌ JSON validation failed. Check LLM response format.")
-                    return {}
-            else:
-                st.error("❌ No valid JSON response extracted.")
-                return {}
-
-    except json.JSONDecodeError:
-        st.error("❌ JSON decoding failed. Check LLM response format.")
-        return {}
-    except Exception as e:
-        st.error(f"❌ Unexpected error: {str(e)}")
-        return {}
-
-def extract_raw_text(pdf_file):
-    """Extracts raw text from a PDF file."""
-    with pdfplumber.open(pdf_file) as pdf:
-        return "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
 
 def insert_trade(date, memo_number, stock, quantity, rate, comm_amount, cdc_charges, sales_tax, total_amount, trade_type):
     """Inserts a trade record into the database with retry logic to handle locked database issues."""
@@ -158,67 +57,6 @@ def insert_trade(date, memo_number, stock, quantity, rate, comm_amount, cdc_char
 
     st.error("❌ Could not insert trade after multiple attempts due to database locking.")
 
-def process_trade_receipt():
-    """Handles the Streamlit UI for trade receipt uploads."""
-    st.header("Upload Trade Receipt")
-    uploaded_file = st.file_uploader("Upload your Trade Confirmation (PDF)", type=["pdf"])
-
-    if uploaded_file is not None:
-        raw_text = extract_raw_text(uploaded_file)
-        st.write("### Extracted Raw Text from PDF:")
-        st.text(raw_text[:2000])
-
-        extracted_data = extract_trade_details_with_llm(raw_text)
-
-        if extracted_data:
-            trade_date = extracted_data.get("date", "N/A")
-            memo_number = extracted_data.get("memo_number")  # Extracted correctly
-            trades = extracted_data.get("trades", [])
-
-            if not memo_number:
-                st.error("❌ No memo number found in trade receipt. Please check the file.")
-                return
-
-            if not trades:
-                st.error("❌ Failed to extract trade details.")
-                return
-
-            # Insert new trades in a SINGLE TRANSACTION
-            conn = sqlite3.connect("portfolio.db", timeout=10)
-            cursor = conn.cursor()
-            try:
-                cursor.execute("BEGIN TRANSACTION")
-
-                # Insert memo first
-               # cursor.execute("INSERT INTO memos (memo_number) VALUES (?)", (memo_number,))
-
-                # Insert all trades (directly, without calling `insert_trade`)
-                for trade in trades:
-                    total_amount = float(str(trade.get("total_amount", 0.0)).replace(",", ""))  # Convert properly
-                    cursor.execute("""
-                        INSERT INTO trades (date, memo_number, stock, quantity, rate, comm_amount, cdc_charges, sales_tax, total_amount, type)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
-                        trade_date,
-                        memo_number,
-                        trade.get("stock", "UNKNOWN"),
-                        trade.get("quantity", 0),
-                        trade.get("rate", 0.0),
-                        trade.get("comm_amount", 0.0),
-                        trade.get("cdc_charges", 0.0),
-                        trade.get("sales_tax", 0.0),
-                        total_amount,
-                        "Buy"
-                    ))
-
-                cursor.execute("COMMIT")
-                st.success(f"✅ All trades added successfully under memo number {memo_number}!")
-
-            except sqlite3.Error as e:
-                cursor.execute("ROLLBACK")
-                st.error(f"❌ Failed to add trades: {str(e)}")
-            finally:
-                conn.close()
 
 # ✅ **Manual Entry UI**
 def manual_trade_entry():

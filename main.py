@@ -2,8 +2,8 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
-from trade_receipt import process_trade_receipt, manual_trade_entry
-from dividend_warrant import process_dividend_warrant, manual_dividend_entry
+from trade_receipt import manual_trade_entry
+from dividend_warrant import manual_dividend_entry
 from sell_trade import sell_trade
 from view_trades import view_trades
 from portfolio_summary import view_portfolio_summary
@@ -278,10 +278,8 @@ with st.sidebar:
         "Choose Your Action",
         [
             "Portfolio Summary",
-            "Upload Trade Receipt",
             "Manually Enter Trade",
             "Manually Enter Metal Trade",
-            "Upload Dividend Warrant",
             "Manually Enter Dividend",
             "Sell Stock",
             "View Trades"
@@ -290,14 +288,14 @@ with st.sidebar:
     )
 
 # Route to appropriate function based on selection
-if option == "Upload Trade Receipt":
-    process_trade_receipt()
-elif option == "Manually Enter Trade":
+#if option == "Upload Trade Receipt":
+ #   process_trade_receipt()
+if option == "Manually Enter Trade":
     manual_trade_entry()
 elif option == "Manually Enter Metal Trade":
     manual_metal_trade_entry()
-elif option == "Upload Dividend Warrant":
-    process_dividend_warrant()
+#elif option == "Upload Dividend Warrant":
+ #   process_dividend_warrant()
 elif option == "Manually Enter Dividend":
     manual_dividend_entry()
 elif option == "Sell Stock":
