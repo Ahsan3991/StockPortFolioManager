@@ -26,9 +26,6 @@ if 'ADMIN_PASSWORD' in os.environ:
     ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
 elif hasattr(st, 'secrets') and 'ADMIN_PASSWORD' in st.secrets:
     ADMIN_PASSWORD = st.secrets['ADMIN_PASSWORD']
-#else:
- #   # Fallback for development (change this!)
-  #  ADMIN_PASSWORD = "yourSecurePassword123"  # Change this!
 
 # Page Configuration
 st.set_page_config(
@@ -224,6 +221,9 @@ if 'is_admin' not in st.session_state:
 if 'admin_view' not in st.session_state:
     st.session_state.admin_view = "User Management"
 
+if 'selected_option' not in st.session_state:
+    st.session_state.selected_option = "Portfolio Summary"
+
 # Create admin user if not exists
 users = load_users()
 if 'admin' not in [u.lower() for u in users]:
@@ -397,8 +397,49 @@ if not st.session_state.logged_in:
     # Show login page if not logged in
     login_page()
 else:
-    # Display admin interface or normal interface
+    # First define the sidebar to collect user choice
+    with st.sidebar:
+        # Show user info and logout button
+        show_user_info()
+        
+        st.subheader("Navigation")
+        st.markdown('<p style="font-size: 1.5rem; font-weight: 500; color: #1E4020; margin-bottom: 0.2rem;">Choose Your Action</p>', unsafe_allow_html=True)
+        
+        # Different navigation options for admin vs regular users
+        if st.session_state.is_admin:
+            option = st.selectbox(
+                "Choose Your Action",
+                [
+                    "User Management",
+                    "App Dashboard"
+                ],
+                label_visibility="collapsed"
+            )
+            
+            # Update admin view based on selection
+            if option != st.session_state.admin_view:
+                st.session_state.admin_view = option
+                st.rerun()
+        else:
+            # Store the selection in session state to preserve it between reruns
+            selected_option = st.selectbox(
+                "Choose Your Action",
+                [
+                    "Portfolio Summary",
+                    "Manually Enter Trade",
+                    "Manually Enter Metal Trade",
+                    "Manually Enter Dividend",
+                    "Sell Stock",
+                    "View Trades"
+                ],
+                label_visibility="collapsed"
+            )
+            # Store selection in session state
+            st.session_state.selected_option = selected_option
+    
+    # Now define the main content area OUTSIDE the sidebar
     if st.session_state.is_admin:
+        # Admin interface
         st.markdown('<div class="admin-header">🔒 ADMIN CONTROL PANEL</div>', unsafe_allow_html=True)
         
         # Admin tabs without using .select()
@@ -409,8 +450,7 @@ else:
         if st.session_state.admin_view == "User Management":
             show_user_management()
         else:
-            show_app_dashboard()
-                
+            show_app_dashboard()                
     else:
         # Regular user interface
         # Create a centered container for the logo
@@ -440,55 +480,18 @@ else:
         st.markdown('<div class="welcome-section"></div>', unsafe_allow_html=True)
         st.markdown(f"## Welcome to your personal portfolio tracker, {st.session_state.username}!")
         st.caption(f"Your portfolio data is stored in: {get_db_path()}")
-
-    # Sidebar Navigation
-    with st.sidebar:
-        # Show user info and logout button
-        show_user_info()
         
-        st.subheader("Navigation")
-        st.markdown('<p style="font-size: 1.5rem; font-weight: 500; color: #1E4020; margin-bottom: 0.2rem;">Choose Your Action</p>', unsafe_allow_html=True)
-        
-        # Different navigation options for admin vs regular users
-        if st.session_state.is_admin:
-            option = st.selectbox(
-                "Choose Your Action",
-                [
-                    "User Management",
-                    "App Dashboard"
-                ],
-                label_visibility="collapsed"
-            )
-            
-            # Update admin view based on selection
-            if option != st.session_state.admin_view:
-                st.session_state.admin_view = option
-                st.rerun()
-                
-        else:
-            option = st.selectbox(
-                "Choose Your Action",
-                [
-                    "Portfolio Summary",
-                    "Manually Enter Trade",
-                    "Manually Enter Metal Trade",
-                    "Manually Enter Dividend",
-                    "Sell Stock",
-                    "View Trades"
-                ],
-                label_visibility="collapsed"
-            )
-            
-            # Route to appropriate function based on selection
-            if option == "Manually Enter Trade":
-                manual_trade_entry()
-            elif option == "Manually Enter Metal Trade":
-                manual_metal_trade_entry()
-            elif option == "Manually Enter Dividend":
-                manual_dividend_entry()
-            elif option == "Sell Stock":
-                sell_trade()
-            elif option == "View Trades":
-                view_trades()
-            elif option == "Portfolio Summary":
-                view_portfolio_summary()
+        # IMPORTANT: Function calls must be OUTSIDE the sidebar context
+        # This is what fixes the layout issue
+        if st.session_state.selected_option == "Manually Enter Trade":
+            manual_trade_entry()
+        elif st.session_state.selected_option == "Manually Enter Metal Trade":
+            manual_metal_trade_entry()
+        elif st.session_state.selected_option == "Manually Enter Dividend":
+            manual_dividend_entry()
+        elif st.session_state.selected_option == "Sell Stock":
+            sell_trade()
+        elif st.session_state.selected_option == "View Trades":
+            view_trades()
+        elif st.session_state.selected_option == "Portfolio Summary":
+            view_portfolio_summary()
