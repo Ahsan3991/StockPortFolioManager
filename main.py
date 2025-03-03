@@ -2,6 +2,7 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
+import os
 from trade_receipt import manual_trade_entry
 from dividend_warrant import manual_dividend_entry
 from sell_trade import sell_trade
@@ -14,7 +15,7 @@ from db_utils import initialize_user_db, get_db_path
 # Page Configuration
 st.set_page_config(
     page_title="WealthWise",
-    page_icon="./assets/wealthwise-logo-zip-file/png/logo-color.png",
+    page_icon="📊",  # Using an emoji instead of a file path
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -43,11 +44,13 @@ st.markdown("""
         padding: 1rem 0;
         margin: auto;
         width: 100%;  /* This controls how much of the container width to use */
+        text-align: center;
     }
 
-    .centered-logo img {
-        max-width: 100%;
-        height: auto;
+    .centered-logo h1 {
+        font-size: 3rem !important;
+        color: #8a6d17;
+        margin: 0;
     }
     
     .stMetric {
@@ -152,15 +155,14 @@ if not st.session_state.logged_in:
     # Show login page if not logged in
     login_page()
 else:
-    # Display logo in the second column
+    # Display logo/header in the second column
     container = st.container()
 
     with container:
+        # Use text-based logo instead of image to avoid file path issues
         st.markdown('<div class="centered-logo">', unsafe_allow_html=True)
-        st.image(
-            "./assets/wealthwise-logo-zip-file/svg/logo-no-background.svg",
-            use_container_width=True
-        )
+        st.markdown('<h1>WealthWise</h1>', unsafe_allow_html=True)
+        st.markdown('<h3 style="margin-top: 0; color: #cccccc;">Portfolio Manager</h3>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
         # Welcome message with current portfolio name
