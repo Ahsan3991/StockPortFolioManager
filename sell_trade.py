@@ -5,7 +5,8 @@ from datetime import datetime
 
 def get_stock_details():
     """Fetches list of stocks with their quantities and average buying prices."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     try:
@@ -168,7 +169,8 @@ def sell_trade():
             st.error(f"Cannot sell {quantity} shares. Only {available_qty} available.")
             return
         
-        conn = sqlite3.connect("portfolio.db")
+        from db_utils import get_db_connection
+        conn = get_db_connection()
         cursor = conn.cursor()
         
         try:

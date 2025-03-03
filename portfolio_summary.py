@@ -9,7 +9,8 @@ from real_time_stock_prices import get_psx_stock_price
 
 def migrate_stock_prices_buffer():
     """Adds buffer_price column to stock_prices table if it doesn't exist."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     try:
@@ -33,7 +34,8 @@ migrate_stock_prices_buffer()
 
 def get_portfolio_positions():
     """Gets current position for all stocks with real-time previous close price and calculates P/L."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
@@ -185,7 +187,8 @@ def portfolio_distribution():
 
 def calculate_realized_pl():
     """Calculates realized profit/loss from completed sales."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     try:
@@ -261,7 +264,8 @@ def calculate_realized_pl():
 
 def calculate_total_dividends():
     """Calculates total dividends earned per stock."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     try:
@@ -289,7 +293,8 @@ def view_dividend_income():
     """Displays dividend income summary along with a line chart of dividends over time."""
     st.subheader("📈 Dividend Income Over Time")
     
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     
     # Query to fetch dividend data
     dividend_query = """
@@ -320,7 +325,8 @@ def view_dividend_income():
 
 def get_metal_portfolio():
     """Gets current position for all metals with real-time pricing and calculates P/L."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     try:
@@ -477,7 +483,8 @@ def metal_distribution():
 
 def create_metal_price_history_chart():
     """Create a chart showing the price history of metals over time based on purchases."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     
     # Query to get purchase dates and prices for each metal
     price_query = """

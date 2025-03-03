@@ -17,7 +17,8 @@ def fetch_metal_prices():
     """Fetch real-time metal prices, convert to PKR, and store them in the database."""
     metals = ["XAU", "XAG", "XPT", "XPD"]  # Gold, Silver, Platinum, Palladium
     currency = "USD"
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     try:
@@ -115,7 +116,8 @@ def fetch_metal_prices():
 
 def get_latest_metal_prices():
     """Retrieve the latest stored metal prices from the database (already in PKR)."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     try:

@@ -10,7 +10,14 @@ def manual_metal_trade_entry():
     # Metal trade form
     metal = st.selectbox("Select Metal", ["Gold", "Silver", "Platinum", "Palladium"])
     weight = st.number_input("Enter Weight (grams)", min_value=0.01, step=0.01)
-    karat = st.selectbox("Select Karat", [24, 22, 21, 20, 18, 16, 14, 10], index=0)
+    
+    # Only show karat selection for Gold
+    if metal == "Gold":
+        karat = st.selectbox("Select Karat", [24, 22, 21, 20, 18, 16, 14, 10], index=0)
+    else:
+        # For non-gold metals, we don't have a karat value
+        karat = None
+        st.info(f"Karat selection is only applicable for Gold. {metal} purity is measured differently.")
     
     # Currency selection (USD or PKR)
     currency = st.selectbox("Select Currency", ["PKR", "USD"])
@@ -34,14 +41,18 @@ def manual_metal_trade_entry():
         
         # Display confirmation with details
         st.write("**Trade Details:**")
-        st.write(f"Metal: {metal} ({karat}K)")
+        if metal == "Gold":
+            st.write(f"Metal: {metal} ({karat}K)")
+        else:
+            st.write(f"Metal: {metal}")
         st.write(f"Weight: {weight} grams")
         st.write(f"Purchase Price: PKR {purchase_price:.2f} per gram")
         st.write(f"Total Cost: PKR {total_cost:.2f}")
         st.write(f"Date: {date}")
 
 def save_metal_trade(metal, weight, karat, purchase_price, total_cost, date):
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     cursor.execute('''

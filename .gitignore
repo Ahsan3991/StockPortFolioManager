@@ -52,3 +52,4 @@ requirements.txt.lock
 
 # Ignore env files
 .env
+

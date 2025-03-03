@@ -1,6 +1,6 @@
 import streamlit as st
 import sqlite3
-import pdfplumber
+#import pdfplumber
 import json
 import re
 #from gpt4all import GPT4All
@@ -10,7 +10,8 @@ import pandas as pd  # Add this import at the top
 
 def insert_dividend(warrant_no, payment_date, stock_name, rate_per_security, number_of_securities, amount_of_dividend, tax_deducted, amount_paid):
     """Inserts a dividend record into the database."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     try:
@@ -39,7 +40,8 @@ def insert_dividend(warrant_no, payment_date, stock_name, rate_per_security, num
 
 def display_stored_dividends():
     """Displays all stored dividends in a table format."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     try:
         query = """
             SELECT 
@@ -190,7 +192,8 @@ def manual_dividend_entry():
 
             # Check for existing warrant
             if warrant_no.strip():
-                conn = sqlite3.connect("portfolio.db")
+                from db_utils import get_db_connection
+                conn = get_db_connection()
                 cursor = conn.cursor()
                 cursor.execute("SELECT COUNT(*) FROM warrants WHERE warrant_no = ?", (warrant_no,))
                 existing_count = cursor.fetchone()[0]

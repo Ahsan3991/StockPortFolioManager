@@ -28,7 +28,8 @@ def insert_trade(date, memo_number, stock, quantity, rate, comm_amount, cdc_char
     stock = clean_stock_name(stock)
 
     for attempt in range(max_retries):
-        conn = sqlite3.connect("portfolio.db", timeout=10)
+        from db_utils import get_db_connection
+        conn = get_db_connection()
         cursor = conn.cursor()
 
         try:
@@ -168,7 +169,8 @@ def manual_trade_entry():
                     st.session_state.trades_list.append(current_trade)
 
             # Insert trades into the database
-            conn = sqlite3.connect("portfolio.db")
+            from db_utils import get_db_connection
+            conn = get_db_connection()
             cursor = conn.cursor()
             try:
                 cursor.execute("BEGIN TRANSACTION")
@@ -245,7 +247,8 @@ def manual_trade_entry():
 #Display the trade information        
 def display_trades():
     """Displays all stored trades in a table format."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     try:
         query = """
             SELECT 

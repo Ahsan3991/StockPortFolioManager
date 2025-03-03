@@ -13,7 +13,8 @@ def get_psx_stock_price(stock_symbol):
     """
 
     stock_symbol = stock_symbol.upper().strip()
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     try:

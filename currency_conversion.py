@@ -12,7 +12,8 @@ API_KEY = os.getenv("EXCHANGE_RATE_API_KEY")
 
 def initialize_exchange_rates_table():
     """Create the exchange_rates table if it doesn't exist."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute('''CREATE TABLE IF NOT EXISTS exchange_rates (
@@ -55,7 +56,8 @@ def fetch_usd_to_pkr_rate():
 
 def store_exchange_rate(base_currency, target_currency, rate):
     """Store a specific exchange rate in the database."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     try:
         initialize_exchange_rates_table()
@@ -72,7 +74,8 @@ def store_exchange_rate(base_currency, target_currency, rate):
 
 def get_cached_rate(base_currency, target_currency):
     """Get cached exchange rate from the database."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute('''

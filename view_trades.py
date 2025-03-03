@@ -49,7 +49,8 @@ def view_stock_trades():
     if 'editing_trade' not in st.session_state:
         st.session_state.editing_trade = None
     
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     query = """
         SELECT 
             date as 'Date',
@@ -272,7 +273,8 @@ def edit_stock_trade(trade_data):
                 return False
                 
             # Update database
-            conn = sqlite3.connect("portfolio.db")
+            from db_utils import get_db_connection
+            conn = get_db_connection()
             cursor = conn.cursor()
             
             try:
@@ -320,7 +322,8 @@ def edit_stock_trade(trade_data):
 
 def delete_stock_trade(memo_number, stock):
     """Delete a stock trade from the 'trades' table."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     
     try:
@@ -379,7 +382,8 @@ def view_metal_trades():
     if 'editing_metal_trade' not in st.session_state:
         st.session_state.editing_metal_trade = None
 
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     query = """
         SELECT
             id as 'ID',
@@ -519,7 +523,8 @@ def edit_metal_trade(trade_data):
                 st.error("Metal name cannot be empty!")
                 return False
 
-            conn = sqlite3.connect("portfolio.db")
+            from db_utils import get_db_connection
+            conn = get_db_connection()
             cursor = conn.cursor()
             try:
                 cursor.execute("""
@@ -558,7 +563,8 @@ def edit_metal_trade(trade_data):
 
 def delete_metal_trade(row_id):
     """Deletes one metal trade record by 'id' from 'metal_trades'."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("BEGIN TRANSACTION")
@@ -598,7 +604,8 @@ def view_dividends():
     if 'editing_dividend' not in st.session_state:
         st.session_state.editing_dividend = None
 
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     query = """
         SELECT
             id as 'ID',
@@ -730,7 +737,8 @@ def edit_dividend(div_data):
                 st.error("Warrant No cannot be empty!")
                 return False
 
-            conn = sqlite3.connect("portfolio.db")
+            from db_utils import get_db_connection
+            conn = get_db_connection()
             cursor = conn.cursor()
             try:
                 cursor.execute("""
@@ -774,7 +782,8 @@ def edit_dividend(div_data):
 
 def delete_dividend(row_id):
     """Deletes a single dividend record by 'id' from the 'dividends' table."""
-    conn = sqlite3.connect("portfolio.db")
+    from db_utils import get_db_connection
+    conn = get_db_connection()
     cursor = conn.cursor()
     try:
         cursor.execute("BEGIN TRANSACTION")
