@@ -417,8 +417,8 @@ def view_metal_trades():
 
         # Format columns for display
         df['Weight (g)'] = df['Weight (g)'].apply(lambda x: f"{float(x):,.2f}")
-        df['Purchase Price'] = df['Purchase Price'].apply(lambda x: f"USD {float(x):,.2f}")
-        df['Total Cost'] = df['Total Cost'].apply(lambda x: f"USD {float(x):,.2f}")
+        df['Purchase Price'] = df['Purchase Price'].apply(lambda x: f"Rs. {float(x):,.2f}")
+        df['Total Cost'] = df['Total Cost'].apply(lambda x: f"Rs. {float(x):,.2f}")
 
         # If not editing, show the table with edit buttons
         if st.session_state.editing_metal_trade is None:
@@ -490,7 +490,7 @@ def edit_metal_trade(trade_data):
         new_karat = st.number_input("Karat", min_value=1, max_value=24, value=int(trade_data['Karat']))
     with col2:
         new_weight = st.number_input("Weight (g)", min_value=0.01, value=float(str(trade_data['Weight (g)']).replace(',', '')))
-        new_purchase_price = st.number_input("Purchase Price (USD/g)", min_value=0.01, value=float(str(trade_data['Purchase Price']).replace('USD ', '').replace(',', '')))
+        new_purchase_price = st.number_input("Purchase Price (Rs/g)", min_value=0.01, value=float(str(trade_data['Purchase Price']).replace('Rs. ', '').replace(',', '')))
     
     # Recalc total cost
     new_total_cost = new_weight * new_purchase_price
@@ -505,7 +505,7 @@ def edit_metal_trade(trade_data):
         )
     with c2:
         st.metric(
-            "Total Cost (USD)",
+            "Total Cost (Rs.)",
             f"{new_total_cost:,.2f}",
             help="New total cost"
         )

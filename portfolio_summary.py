@@ -285,7 +285,6 @@ def calculate_total_dividends():
     finally:
         conn.close()
 
-
 def view_dividend_income():
     """Displays dividend income summary along with a line chart of dividends over time."""
     st.subheader("📈 Dividend Income Over Time")
@@ -327,8 +326,9 @@ def get_metal_portfolio():
     try:
         # Import the metal pricing function at runtime to avoid circular imports
         from real_time_metal_pricing import get_latest_metal_prices
+        from real_time_metal_pricing import get_metal_price_in_currency
         
-        # Get latest metal prices
+        # Get latest metal prices (now in PKR)
         metal_prices = get_latest_metal_prices()
         
         # Get all metal trades
@@ -363,15 +363,8 @@ def get_metal_portfolio():
             
             metal_code = metal_code_map.get(metal_name)
             current_price = None
-            
-            # Get current price for the corresponding karat
-            if metal_code in metal_prices:
-                karat_price_key = f"price_gram_{karat}k"
-                if karat_price_key in metal_prices[metal_code]:
-                    current_price = metal_prices[metal_code][karat_price_key]
-                else:
-                    # Fallback to 24k price (most common)
-                    current_price = metal_prices[metal_code]["price_gram_24k"]
+            # Ensure we get the price in PKR
+            current_price = get_metal_price_in_currency(metal_code, karat, "PKR")
             
             # Calculate current value and P/L if price is available
             if current_price is not None:
@@ -427,7 +420,7 @@ def metal_distribution():
     else:
         df['Percentage'] = (df['Total Investment'] / total_investment * 100) if total_investment > 0 else 0
         values_column = "Total Investment"
-        title = f"Metal Value Distribution (Total Investment: USD {total_investment:,.2f})"
+        title = f"Metal Value Distribution (Total Investment: PKR {total_investment:,.2f})"
 
     # Create Pie Chart with custom color scheme for metals
     color_map = {
@@ -476,7 +469,7 @@ def metal_distribution():
     st.subheader("Distribution Details")
     distribution_df = df[['Metal', values_column, 'Percentage']].copy()
     distribution_df[values_column] = distribution_df[values_column].apply(
-        lambda x: f"USD {x:,.2f}" if distribution_type == "Value Distribution" else f"{x:,.2f}g"
+        lambda x: f"PKR {x:,.2f}" if distribution_type == "Value Distribution" else f"{x:,.2f}g"
     )
     distribution_df['Percentage'] = distribution_df['Percentage'].apply(lambda x: f"{x:.2f}%")
     
@@ -518,13 +511,13 @@ def create_metal_price_history_chart():
         color='Metal Type',
         markers=True,
         title="Metal Purchase Price History",
-        labels={'Price per Gram': 'Price per Gram (USD)', 'Purchase Date': 'Date'}
+        labels={'Price per Gram': 'Price per Gram (PKR)', 'Purchase Date': 'Date'}
     )
     
     # Customize layout
     fig.update_layout(
         xaxis_title="Date",
-        yaxis_title="Price per Gram (USD)",
+        yaxis_title="Price per Gram (PKR)",
         legend_title="Metal",
         hovermode="closest"
     )
@@ -556,11 +549,11 @@ def view_metal_portfolio_summary():
     # Format for display
     formatted_df = df.copy()
     formatted_df['Total Weight (g)'] = formatted_df['Total Weight (g)'].apply(lambda x: f"{x:,.2f}")
-    formatted_df['Avg. Purchase Price'] = formatted_df['Avg. Purchase Price'].apply(lambda x: f"USD {x:,.2f}")
-    formatted_df['Current Price'] = formatted_df['Current Price'].apply(lambda x: f"USD {x:,.2f}" if isinstance(x, (int, float)) else "N/A")
-    formatted_df['Current Value'] = formatted_df['Current Value'].apply(lambda x: f"USD {x:,.2f}" if isinstance(x, (int, float)) else "N/A")
-    formatted_df['Total Investment'] = formatted_df['Total Investment'].apply(lambda x: f"USD {x:,.2f}")
-    formatted_df['Open P/L'] = formatted_df['Open P/L'].apply(lambda x: f"USD {x:,.2f}" if isinstance(x, (int, float)) else "N/A")
+    formatted_df['Avg. Purchase Price'] = formatted_df['Avg. Purchase Price'].apply(lambda x: f"PKR {x:,.2f}")
+    formatted_df['Current Price'] = formatted_df['Current Price'].apply(lambda x: f"PKR {x:,.2f}" if isinstance(x, (int, float)) else "N/A")
+    formatted_df['Current Value'] = formatted_df['Current Value'].apply(lambda x: f"PKR {x:,.2f}" if isinstance(x, (int, float)) else "N/A")
+    formatted_df['Total Investment'] = formatted_df['Total Investment'].apply(lambda x: f"PKR {x:,.2f}")
+    formatted_df['Open P/L'] = formatted_df['Open P/L'].apply(lambda x: f"PKR {x:,.2f}" if isinstance(x, (int, float)) else "N/A")
     formatted_df['P/L %'] = formatted_df['P/L %'].apply(lambda x: f"{x:,.2f}%" if isinstance(x, (int, float)) else "N/A")
     
     # Display the data table
@@ -576,14 +569,14 @@ def view_metal_portfolio_summary():
     with col1:
         st.metric(
             "Total Investment",
-            f"USD {total_investment:,.2f}",
+            f"PKR {total_investment:,.2f}",
             help="Total amount invested in metals"
         )
     
     with col2:
         st.metric(
             "Total Open P/L",
-            f"USD {total_open_pl:,.2f}",
+            f"PKR {total_open_pl:,.2f}",
             delta=f"{'↑' if total_open_pl > 0 else '↓'} {abs(total_open_pl):,.2f}",
             help="Unrealized profit/loss based on current metal prices"
         )
@@ -591,7 +584,7 @@ def view_metal_portfolio_summary():
     with col3:
         st.metric(
             "Portfolio Value",
-            f"USD {total_current_value:,.2f}",
+            f"PKR {total_current_value:,.2f}",
             delta=f"{((total_current_value/total_investment - 1) * 100):,.2f}%" if total_investment > 0 else "0%",
             help="Current total value of your metals portfolio"
         )
@@ -605,7 +598,6 @@ def view_metal_portfolio_summary():
     # Add price history chart
     st.subheader("📈 Metal Price History")
     create_metal_price_history_chart()
-
 
 def view_portfolio_summary():
     """Displays comprehensive portfolio summary with P/L and dividends."""
@@ -822,7 +814,7 @@ def view_portfolio_summary():
         with col3:
             st.metric(
                 "Metals Portfolio P/L",
-                f"USD {total_metal_pl:,.2f}",
+                f"PKR {total_metal_pl:,.2f}",
                 delta=f"{'↑' if total_metal_pl > 0 else '↓'} {abs(total_metal_pl):,.2f}",
                 help="Unrealized profit/loss from metals portfolio"
             )
@@ -830,16 +822,13 @@ def view_portfolio_summary():
         with col4:
             st.metric(
                 "Total Returns",
-                f"Mixed {total_return:,.2f}",
+                f"PKR {total_return:,.2f}",
                 delta=f"{'↑' if total_return > 0 else '↓'} {abs(total_return):,.2f}",
-                help="Combined returns from stocks and metals (note: currency mix)"
+                help="Combined returns from stocks and metals (all in PKR)"
             )
             
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # Add note about mixed currencies
-        st.info("Note: The Total Returns calculation combines values in different currencies (PKR for stocks, USD for metals). For accurate financial planning, consider currency conversion.")
     except Exception as e:
         st.info("Insufficient data to calculate overall performance.")
         st.exception(e)
-        

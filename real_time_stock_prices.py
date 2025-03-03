@@ -29,8 +29,8 @@ def get_psx_stock_price(stock_symbol):
 
         today_date = dt.date.today().strftime('%Y-%m-%d')
 
-        print(f"Fetching PSX stock price for: {stock_symbol}")
-        print(f"Today's date: {today_date}")
+       # print(f"Fetching PSX stock price for: {stock_symbol}")
+        #print(f"Today's date: {today_date}")
 
         # Check for cached price
         cursor.execute("""
@@ -44,18 +44,18 @@ def get_psx_stock_price(stock_symbol):
 
         if result:
             cached_price, last_updated, buffer_price = result
-            print(f"Cached Price: {cached_price}, Last Updated: {last_updated}, Buffer Price: {buffer_price}")
+          #  print(f"Cached Price: {cached_price}, Last Updated: {last_updated}, Buffer Price: {buffer_price}")
 
             # If we have today's price, return it immediately
             if last_updated == today_date:
-                print(f"✅ Returning cached price for {stock_symbol}: {cached_price}")
+              #  print(f"✅ Returning cached price for {stock_symbol}: {cached_price}")
                 return cached_price
 
         # Scrape stock price from PSX
         try:
             start_date = dt.date(2024, 1, 1)
             end_date = dt.date.today()
-            print(f"Scraping PSX data from {start_date} to {end_date}")
+           # print(f"Scraping PSX data from {start_date} to {end_date}")
 
             data = stocks(stock_symbol, start=start_date, end=end_date)
             
@@ -87,12 +87,12 @@ def get_psx_stock_price(stock_symbol):
 
         # If scraping fails, try cached price
         if cached_price is not None:
-            print(f"⚠️ Returning cached price for {stock_symbol} (Scraping failed): {cached_price}")
+           # print(f"⚠️ Returning cached price for {stock_symbol} (Scraping failed): {cached_price}")
             return cached_price
 
         # If no cached price, try buffer price
         if buffer_price is not None:
-            print(f"⚠️ Returning buffer price for {stock_symbol} (Scraping & Cache failed): {buffer_price}")
+          #  print(f"⚠️ Returning buffer price for {stock_symbol} (Scraping & Cache failed): {buffer_price}")
             return buffer_price
 
         # If all else fails, return None

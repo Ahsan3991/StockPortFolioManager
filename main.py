@@ -21,11 +21,16 @@ st.set_page_config(
 # Custom CSS for overall app styling
 st.markdown("""
     <style>
+    /* Content container styling */
+    [data-testid="stAppViewContainer"] {
+        background-color: #191a16;  /* Background color, greenish-black */
+    }
+            
     /* Base styling for metrics */
     .metric-container {
         padding: 1rem;
         border-radius: 0.5rem;
-        background: #1E1E1E;
+        background: #262624;
         margin-bottom: 1rem;
     }
     
@@ -36,7 +41,7 @@ st.markdown("""
         align-items: center;
         padding: 1rem 0;
         margin: auto;
-        width: 80%;  /* This controls how much of the container width to use */
+        width: 100%;  /* This controls how much of the container width to use */
     }
 
     .centered-logo img {
@@ -45,7 +50,7 @@ st.markdown("""
     }
     
     .stMetric {
-        background-color: #1E4020;
+        background-color:#262624 ;
         padding: 1rem;
         border-radius: 0.5rem;
     }
@@ -71,7 +76,7 @@ st.markdown("""
     .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
-        max-width: 75% !important;
+        max-width: 85% !important;
     }
 
     /* Sidebar styling */
@@ -89,15 +94,54 @@ st.markdown("""
         font-size: 1.5rem !important;
         padding-bottom: 0.5rem;
     }
+    
+    /* Add sidebar background color */
+    [data-testid="stSidebar"] {
+        background-color: #8a6d17;
+    }
+    
+    /* Make text in sidebar white */
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] div,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: white;
+    }
+    
+    /* Target the subheader specifically */
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] .sidebar-content h3,
+    [data-testid="stSidebar"] .st-emotion-cache-16idsys h3,
+    [data-testid="stSidebar"] .st-bq,
+    [data-testid="stSidebar"] .st-af,
+    [data-testid="stSidebar"] .st-ae {
+        font-size: 2.5rem !important;
+        font-weight: bold !important;
+        margin-top: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Increase font size for "Choose Action" label */
+    [data-testid="stSidebar"] .stSelectbox label,
+    [data-testid="stSidebar"] .stSelectbox .st-bs,
+    [data-testid="stSidebar"] .stSelectbox .st-bq {
+        font-size: 1.8rem !important;
+        font-weight: 500 !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Ensure dropdown options are also larger */
+    [data-testid="stSidebar"] select option {
+        font-size: 1.2rem !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 
 def initialize_db():
-    """
-    Creates all required tables if they do not exist (EXCEPT metal_trades).
-    We'll recreate metal_trades separately to ensure 'id' is an autoincrement PK.
-    """
+
     conn = sqlite3.connect("portfolio.db")
     cursor = conn.cursor()
     
@@ -229,8 +273,9 @@ with container:
 # Sidebar Navigation
 with st.sidebar:
     st.subheader("Navigation")
+    st.markdown('<p style="font-size: 1.5rem; font-weight: 500; color: #1E4020; margin-bottom: 0.2rem;">Choose Your Action</p>', unsafe_allow_html=True)
     option = st.selectbox(
-        "Choose Action",
+        "Choose Your Action",
         [
             "Portfolio Summary",
             "Upload Trade Receipt",
@@ -240,7 +285,8 @@ with st.sidebar:
             "Manually Enter Dividend",
             "Sell Stock",
             "View Trades"
-        ]
+        ],
+         label_visibility="collapsed"  # This hides the label but keeps it accessible
     )
 
 # Route to appropriate function based on selection
