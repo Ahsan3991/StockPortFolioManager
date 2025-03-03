@@ -36,21 +36,37 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     
-    /* Logo styling */
-    .centered-logo {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 1rem 0;
-        margin: auto;
-        width: 100%;  /* This controls how much of the container width to use */
+    /* App title and subtitle styling */
+    .app-title {
         text-align: center;
+        width: 100%;
+        margin-top: 10px;
+        margin-bottom: 0;
+        padding-bottom: 0;
     }
-
-    .centered-logo h1 {
-        font-size: 3rem !important;
-        color: #8a6d17;
-        margin: 0;
+    
+    .app-title h1 {
+        font-size: 2.5em !important;
+        color: white;
+        font-weight: 600;
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+        line-height: 1.2;
+    }
+    
+    .app-subtitle {
+        text-align: center;
+        width: 100%;
+        margin-top: 0;
+    }
+    
+    .app-subtitle h2 {
+        font-size: 1.8em !important;
+        color: #cccccc;
+        font-weight: 400;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        line-height: 1.2;
     }
     
     .stMetric {
@@ -140,6 +156,11 @@ st.markdown("""
     [data-testid="stSidebar"] select option {
         font-size: 1.2rem !important;
     }
+    
+    /* Add some space after the title section */
+    .welcome-section {
+        margin-top: 20px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -155,19 +176,14 @@ if not st.session_state.logged_in:
     # Show login page if not logged in
     login_page()
 else:
-    # Display logo/header in the second column
-    container = st.container()
-
-    with container:
-        # Use text-based logo instead of image to avoid file path issues
-        st.markdown('<div class="centered-logo">', unsafe_allow_html=True)
-        st.markdown('<h1>WealthWise</h1>', unsafe_allow_html=True)
-        st.markdown('<h3 style="margin-top: 0; color: #cccccc;">Portfolio Manager</h3>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Welcome message with current portfolio name
-        st.markdown(f"## Welcome to your personal portfolio tracker, {st.session_state.username}!")
-        st.caption(f"Your portfolio data is stored in: {get_db_path()}")
+    # Display title and subtitle
+    st.markdown('<div class="app-title"><h1>WealthWise</h1></div>', unsafe_allow_html=True)
+    st.markdown('<div class="app-subtitle"><h2>Portfolio Manager</h2></div>', unsafe_allow_html=True)
+    
+    # Welcome message with current portfolio name
+    st.markdown('<div class="welcome-section"></div>', unsafe_allow_html=True)
+    st.markdown(f"## Welcome to your personal portfolio tracker, {st.session_state.username}!")
+    st.caption(f"Your portfolio data is stored in: {get_db_path()}")
 
     # Sidebar Navigation
     with st.sidebar:
