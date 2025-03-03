@@ -38,9 +38,20 @@ st.markdown("""
     
     /* Logo container styling */
     .logo-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 30px auto;
         text-align: center;
-        margin-top: 20px;
-        margin-bottom: 20px;
+        width: 100%;
+    }
+    
+    /* Center the image in Streamlit */
+    .stImage {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
     }
     
     /* App title as fallback */
@@ -166,7 +177,7 @@ st.markdown("""
     
     /* Add some space after the title section */
     .welcome-section {
-        margin-top: 20px;
+        margin-top: 30px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -183,29 +194,28 @@ if not st.session_state.logged_in:
     # Show login page if not logged in
     login_page()
 else:
-    # Display logo or text-based title with fallback
-    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+    # Create a centered container for the logo
+    col1, col2, col3 = st.columns([1, 2, 1])
     
-    # Try different methods to display the logo, with fallbacks
-    try:
-        # Method 1: Using st.image with width parameter
-        logo_path = "./assets/wealthwise-logo-zip-file/svg/logo-no-background.svg"
-        if os.path.exists(logo_path):
-            st.image(logo_path, width=400)
-        else:
-            # If main logo not found, try alternative logo
-            alt_logo_path = "./assets/wealthwise-logo-zip-file/png/logo-no-background.png"
-            if os.path.exists(alt_logo_path):
-                st.image(alt_logo_path, width=400)
+    with col2:
+        # Display logo or text-based title with fallback
+        try:
+            # Method 1: Using st.image with width parameter - much larger now
+            logo_path = "./assets/wealthwise-logo-zip-file/svg/logo-no-background.svg"
+            if os.path.exists(logo_path):
+                st.image(logo_path, width=600)
             else:
-                # Fallback to text-based title
-                raise FileNotFoundError("Logo files not found")
-    except Exception as e:
-        # Fallback to text-based title if image doesn't work
-        st.markdown('<div class="app-title"><h1>WealthWise</h1></div>', unsafe_allow_html=True)
-        st.markdown('<div class="app-subtitle"><h2>Portfolio Manager</h2></div>', unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+                # If main logo not found, try alternative logo
+                alt_logo_path = "./assets/wealthwise-logo-zip-file/png/logo-no-background.png"
+                if os.path.exists(alt_logo_path):
+                    st.image(alt_logo_path, width=600)
+                else:
+                    # Fallback to text-based title
+                    raise FileNotFoundError("Logo files not found")
+        except Exception as e:
+            # Fallback to text-based title if image doesn't work
+            st.markdown('<div class="app-title"><h1>WealthWise</h1></div>', unsafe_allow_html=True)
+            st.markdown('<div class="app-subtitle"><h2>Portfolio Manager</h2></div>', unsafe_allow_html=True)
     
     # Welcome message with current portfolio name
     st.markdown('<div class="welcome-section"></div>', unsafe_allow_html=True)
