@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import sqlite3
 import os
+import time  # Added import for sleep functionality
 from trade_receipt import manual_trade_entry
 from dividend_warrant import manual_dividend_entry
 from sell_trade import sell_trade
@@ -11,18 +12,24 @@ from portfolio_summary import view_portfolio_summary
 from manual_metal_trade_entry import manual_metal_trade_entry
 from auth import load_users, delete_user, register_user
 from db_utils import initialize_user_db, get_db_path
-from dotenv import load_dotenv
+
+# For .env file support (optional)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not installed, will use hardcoded fallback
 
 # ADMIN CONFIGURATION
-# Load environment variables from .env file (for local development)
-load_dotenv()
-
 # Get admin password from environment variables or Streamlit secrets
 if 'ADMIN_PASSWORD' in os.environ:
     ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
-elif 'ADMIN_PASSWORD' in st.secrets:
+elif hasattr(st, 'secrets') and 'ADMIN_PASSWORD' in st.secrets:
     ADMIN_PASSWORD = st.secrets['ADMIN_PASSWORD']
-    
+else:
+    # Fallback for development (change this!)
+    ADMIN_PASSWORD = "yourSecurePassword123"  # Change this!
+
 # Page Configuration
 st.set_page_config(
     page_title="WealthWise",
@@ -214,6 +221,9 @@ if 'username' not in st.session_state:
 if 'is_admin' not in st.session_state:
     st.session_state.is_admin = False
 
+if 'admin_view' not in st.session_state:
+    st.session_state.admin_view = "User Management"
+
 # Create admin user if not exists
 users = load_users()
 if 'admin' not in [u.lower() for u in users]:
@@ -248,7 +258,10 @@ def login_page():
                     st.success("Welcome, Administrator!")
                     st.rerun()
                 else:
-                    st.error("Incorrect admin password.")
+                    # Show error message for incorrect admin password
+                    st.error("❌ Incorrect admin password.")
+                    time.sleep(1)  # Wait for 1 second
+                    st.rerun()  # Reload the page for retry
             elif user_exists(username):
                 st.session_state.logged_in = True
                 st.session_state.username = username
@@ -303,6 +316,82 @@ def show_user_info():
             st.session_state.is_admin = False
             st.rerun()
 
+# Function to show user management interface
+def show_user_management():
+    st.subheader("User Management")
+    
+    # Load all users
+    users = load_users()
+    
+    if not users:
+        st.warning("No registered users found.")
+    else:
+        # Display all users
+        st.write("### Registered Users")
+        
+        # Create a dataframe for better visualization
+        import pandas as pd
+        user_df = pd.DataFrame({"Username": users})
+        st.dataframe(user_df)
+        
+        st.divider()
+        
+        # Delete user section
+        st.subheader("Delete User")
+        
+        username = st.selectbox("Select user to delete:", [u for u in users if u.lower() != 'admin'])
+        
+        # Display database path for the selected user
+        if username:
+            st.caption(f"Database path: {get_db_path(username)}")
+        
+        # Confirmation
+        if username:
+            st.warning(f"⚠️ WARNING: Deleting user '{username}' will permanently remove all their data!")
+            confirm = st.text_input("Type the username again to confirm deletion:")
+            
+            if st.button("Delete User"):
+                if not confirm:
+                    st.error("Please confirm by typing the username.")
+                elif confirm.lower() != username.lower():
+                    st.error("Username confirmation doesn't match. Please try again.")
+                else:
+                    if delete_user(username):
+                        st.success(f"✅ User '{username}' and all their data have been deleted.")
+                        # Refresh the page after deletion
+                        st.rerun()
+                    else:
+                        st.error(f"Failed to delete user '{username}'.")
+
+# Function to show app dashboard interface
+def show_app_dashboard():
+    st.subheader("Application Dashboard")
+    st.write("Welcome to the admin dashboard. Here you can see app statistics and manage the application.")
+    
+    # Load users for statistics
+    users = load_users()
+    
+    # Stats section
+    st.write("### System Statistics")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.metric("Total Users", len(users))
+        
+    with col2:
+        # Get the data directory
+        base_dir = os.environ.get('HOME', '')
+        if os.path.exists(base_dir) and os.access(base_dir, os.W_OK):
+            data_dir = os.path.join(base_dir, 'wealthwise_data')
+        else:
+            data_dir = 'db'
+        
+        if os.path.exists(data_dir):
+            db_files = [f for f in os.listdir(data_dir) if f.endswith('.db')]
+            st.metric("Database Files", len(db_files))
+        else:
+            st.metric("Database Files", "N/A")
+
 # Main application logic
 if not st.session_state.logged_in:
     # Show login page if not logged in
@@ -312,78 +401,15 @@ else:
     if st.session_state.is_admin:
         st.markdown('<div class="admin-header">🔒 ADMIN CONTROL PANEL</div>', unsafe_allow_html=True)
         
-        admin_tab1, admin_tab2 = st.tabs(["User Management", "App Dashboard"])
+        # Admin tabs without using .select()
+        admin_option = st.radio("Admin View", ["User Management", "App Dashboard"], horizontal=True)
+        st.session_state.admin_view = admin_option
         
-        with admin_tab1:
-            st.subheader("User Management")
-            
-            # Load all users
-            users = load_users()
-            
-            if not users:
-                st.warning("No registered users found.")
-            else:
-                # Display all users
-                st.write("### Registered Users")
-                
-                # Create a dataframe for better visualization
-                import pandas as pd
-                user_df = pd.DataFrame({"Username": users})
-                st.dataframe(user_df)
-                
-                st.divider()
-                
-                # Delete user section
-                st.subheader("Delete User")
-                
-                username = st.selectbox("Select user to delete:", [u for u in users if u.lower() != 'admin'])
-                
-                # Display database path for the selected user
-                if username:
-                    st.caption(f"Database path: {get_db_path(username)}")
-                
-                # Confirmation
-                if username:
-                    st.warning(f"⚠️ WARNING: Deleting user '{username}' will permanently remove all their data!")
-                    confirm = st.text_input("Type the username again to confirm deletion:")
-                    
-                    if st.button("Delete User"):
-                        if not confirm:
-                            st.error("Please confirm by typing the username.")
-                        elif confirm.lower() != username.lower():
-                            st.error("Username confirmation doesn't match. Please try again.")
-                        else:
-                            if delete_user(username):
-                                st.success(f"✅ User '{username}' and all their data have been deleted.")
-                                # Refresh the page after deletion
-                                st.rerun()
-                            else:
-                                st.error(f"Failed to delete user '{username}'.")
-                                
-        with admin_tab2:
-            st.subheader("Application Dashboard")
-            st.write("Welcome to the admin dashboard. Here you can see app statistics and manage the application.")
-            
-            # Stats section
-            st.write("### System Statistics")
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.metric("Total Users", len(users))
-                
-            with col2:
-                # Get the data directory
-                base_dir = os.environ.get('HOME', '')
-                if os.path.exists(base_dir) and os.access(base_dir, os.W_OK):
-                    data_dir = os.path.join(base_dir, 'wealthwise_data')
-                else:
-                    data_dir = 'db'
-                
-                if os.path.exists(data_dir):
-                    db_files = [f for f in os.listdir(data_dir) if f.endswith('.db')]
-                    st.metric("Database Files", len(db_files))
-                else:
-                    st.metric("Database Files", "N/A")
+        # Display the selected admin view
+        if st.session_state.admin_view == "User Management":
+            show_user_management()
+        else:
+            show_app_dashboard()
                 
     else:
         # Regular user interface
@@ -434,11 +460,10 @@ else:
                 label_visibility="collapsed"
             )
             
-            # Handle admin navigation options separately
-            if option == "User Management":
-                admin_tab1.select()
-            elif option == "App Dashboard":
-                admin_tab2.select()
+            # Update admin view based on selection
+            if option != st.session_state.admin_view:
+                st.session_state.admin_view = option
+                st.rerun()
                 
         else:
             option = st.selectbox(
