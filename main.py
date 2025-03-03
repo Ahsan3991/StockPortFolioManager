@@ -46,7 +46,7 @@ st.markdown("""
     }
     
     .app-title h1 {
-        font-size: 3rem !important;
+        font-size: 3em !important;
         color: white;
         font-weight: 600;
         margin-bottom: 0 !important;
