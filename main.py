@@ -46,7 +46,7 @@ st.markdown("""
     }
     
     .app-title h1 {
-        font-size: 2.5em !important;
+        font-size: 3rem !important;
         color: white;
         font-weight: 600;
         margin-bottom: 0 !important;
@@ -148,7 +148,7 @@ st.markdown("""
     [data-testid="stSidebar"] .stSelectbox .st-bs,
     [data-testid="stSidebar"] .stSelectbox .st-bq {
         font-size: 1.8rem !important;
-        font-weight: 500 !important;
+        font-weight: 300 !important;
         margin-bottom: 0.5rem !important;
     }
     
@@ -178,7 +178,7 @@ if not st.session_state.logged_in:
 else:
     # Display title and subtitle
     st.markdown('<div class="app-title"><h1>WealthWise</h1></div>', unsafe_allow_html=True)
-    st.markdown('<div class="app-subtitle"><h2>Portfolio Manager</h2></div>', unsafe_allow_html=True)
+    st.markdown('<div class="app-subtitle"><h2>Be Wealthy!</h2></div>', unsafe_allow_html=True)
     
     # Welcome message with current portfolio name
     st.markdown('<div class="welcome-section"></div>', unsafe_allow_html=True)
