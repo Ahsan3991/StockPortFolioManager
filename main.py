@@ -26,9 +26,9 @@ if 'ADMIN_PASSWORD' in os.environ:
     ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
 elif hasattr(st, 'secrets') and 'ADMIN_PASSWORD' in st.secrets:
     ADMIN_PASSWORD = st.secrets['ADMIN_PASSWORD']
-else:
-    # Fallback for development (change this!)
-    ADMIN_PASSWORD = "yourSecurePassword123"  # Change this!
+#else:
+ #   # Fallback for development (change this!)
+  #  ADMIN_PASSWORD = "yourSecurePassword123"  # Change this!
 
 # Page Configuration
 st.set_page_config(
