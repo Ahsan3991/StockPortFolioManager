@@ -4,19 +4,32 @@ import os
 import json
 from db_utils import initialize_user_db
 
-# File to store registered usernames
-USERS_FILE = "registered_users.json"
+def get_users_file_path():
+    """Get the path to the users file, ensuring it's writable in Streamlit Cloud"""
+    # For Streamlit Cloud, we need to use a writable directory
+    base_dir = os.environ.get('HOME', '')
+    
+    # If running on Streamlit Cloud, use a subdirectory in HOME
+    if os.path.exists(base_dir) and os.access(base_dir, os.W_OK):
+        data_dir = os.path.join(base_dir, 'wealthwise_data')
+        os.makedirs(data_dir, exist_ok=True)
+        return os.path.join(data_dir, "registered_users.json")
+    else:
+        # Fallback to local directory for local development
+        return "registered_users.json"
 
 def load_users():
     """Load registered users from file"""
-    if os.path.exists(USERS_FILE):
-        with open(USERS_FILE, 'r') as f:
+    users_file = get_users_file_path()
+    if os.path.exists(users_file):
+        with open(users_file, 'r') as f:
             return json.load(f)
     return []
 
 def save_users(users):
     """Save registered users to file"""
-    with open(USERS_FILE, 'w') as f:
+    users_file = get_users_file_path()
+    with open(users_file, 'w') as f:
         json.dump(users, f)
 
 def register_user(username):
@@ -102,7 +115,6 @@ def delete_user(username):
         bool: True if user was successfully deleted, False otherwise
     """
     from db_utils import get_db_path
-    import os
     
     # Check if user exists
     if not user_exists(username):
@@ -125,30 +137,3 @@ def delete_user(username):
     save_users(users)
     
     return True
-
-# Add this function for admin usage
-def admin_delete_user():
-    """Admin interface to delete a user"""
-    st.title("🔒 Admin: Delete User")
-    
-    # Load all users
-    users = load_users()
-    
-    if not users:
-        st.warning("No registered users found.")
-        return
-    
-    # Select user to delete
-    username = st.selectbox("Select user to delete:", users)
-    
-    # Confirmation
-    if st.button("Delete User"):
-        confirm = st.text_input("Type the username again to confirm deletion:")
-        
-        if confirm.lower() == username.lower():
-            if delete_user(username):
-                st.success(f"User '{username}' and all their data have been deleted.")
-            else:
-                st.error(f"Failed to delete user '{username}'.")
-        elif confirm:
-            st.error("Username confirmation doesn't match. Please try again.")

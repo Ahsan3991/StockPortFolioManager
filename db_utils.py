@@ -7,6 +7,8 @@ def get_db_path(username=None):
     """
     Get the database path for a specific user.
     Returns the path to the user-specific database file.
+    
+    In Streamlit Cloud, uses os.environ.get('HOME') to find a writable directory.
     """
     if not username and 'username' in st.session_state:
         username = st.session_state.username
@@ -15,11 +17,21 @@ def get_db_path(username=None):
         # Fallback to default if no username is set
         return "portfolio.db"
     
-    # Create a db directory if it doesn't exist
-    os.makedirs('db', exist_ok=True)
+    # For Streamlit Cloud, we need to use a writable directory
+    base_dir = os.environ.get('HOME', '')
+    
+    # If running on Streamlit Cloud, use a subdirectory in HOME
+    if os.path.exists(base_dir) and os.access(base_dir, os.W_OK):
+        db_dir = os.path.join(base_dir, 'wealthwise_data')
+    else:
+        # Fallback to local directory for local development
+        db_dir = 'db'
+    
+    # Create the directory if it doesn't exist
+    os.makedirs(db_dir, exist_ok=True)
     
     # Return the user-specific database path
-    return os.path.join('db', f"{username.lower()}_portfolio.db")
+    return os.path.join(db_dir, f"{username.lower()}_portfolio.db")
 
 def get_db_connection(timeout=10):
     """
