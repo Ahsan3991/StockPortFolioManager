@@ -309,43 +309,34 @@ def view_dividend_income():
     if dividend_df.empty:
         st.warning("No dividend records found.")
     else:
-        # Convert date column to datetime with robust error handling
+        # Try to convert dates without dropping rows
         try:
-            # First try with 'mixed' format to handle various formats
-            dividend_df['Date'] = pd.to_datetime(dividend_df['Date'], format='mixed')
-        except (ValueError, TypeError):
-            try:
-                # Then try with day-month-year format (most likely format based on error)
-                dividend_df['Date'] = pd.to_datetime(dividend_df['Date'], format='%d-%m-%Y')
-            except (ValueError, TypeError):
-                try:
-                    # If that fails, try year-month-day
-                    dividend_df['Date'] = pd.to_datetime(dividend_df['Date'], format='%Y-%m-%d')
-                except (ValueError, TypeError):
-                    try:
-                        # Last attempt - let pandas infer the format
-                        dividend_df['Date'] = pd.to_datetime(dividend_df['Date'], errors='coerce')
-                        # Drop any rows where date parsing failed
-                        dividend_df = dividend_df.dropna(subset=['Date'])
-                        
-                        if dividend_df.empty:
-                            st.error("Failed to parse any dates. Please check date formatting.")
-                            return
-                    except Exception as e:
-                        st.error(f"Error parsing dates: {str(e)}")
-                        return
-
-        # Create line chart
-        fig = px.line(dividend_df, x='Date', y='Net Dividend', 
-                      markers=True, title="Dividend Income Over Time",
-                      labels={'Net Dividend': 'Net Dividend (Rs.)', 'Date': 'Payment Date'})
-
-        # Display chart
-        st.plotly_chart(fig, use_container_width=True)
-
-        # Display raw dividend data
-        st.write("### Dividend Details")
-        st.dataframe(dividend_df.style.format({"Net Dividend": "Rs. {:.2f}"}), hide_index=True)
+            # Try parsing dates with flexible approach
+            dividend_df['Date_Parsed'] = pd.to_datetime(dividend_df['Date'], errors='coerce')
+            
+            # Create a dataframe that only includes rows with successfully parsed dates for the chart
+            chart_df = dividend_df.dropna(subset=['Date_Parsed']).copy()
+            
+            if chart_df.empty:
+                st.warning("Could not parse any date values for the chart visualization.")
+            else:
+                # Create line chart with the parsed dates
+                fig = px.line(chart_df, x='Date_Parsed', y='Net Dividend', 
+                            markers=True, title="Dividend Income Over Time",
+                            labels={'Net Dividend': 'Net Dividend (Rs.)', 'Date_Parsed': 'Payment Date'})
+                st.plotly_chart(fig, use_container_width=True)
+            
+            # Show all data in the table view with original dates
+            st.write("### Dividend Details")
+            display_df = dividend_df[['Date', 'Net Dividend']].copy()  # Use original dates for display
+            st.dataframe(display_df.style.format({"Net Dividend": "Rs. {:.2f}"}), hide_index=True)
+            
+        except Exception as e:
+            st.error(f"Error parsing dates: {str(e)}")
+            
+            # Still show the raw data even if chart fails
+            st.write("### Dividend Details")
+            st.dataframe(dividend_df.style.format({"Net Dividend": "Rs. {:.2f}"}), hide_index=True)
         
 
 def get_metal_portfolio():

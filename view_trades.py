@@ -163,7 +163,6 @@ def view_stock_trades():
     finally:
         conn.close()
 
-
 def edit_stock_trade(trade_data):
     """
     Enhanced edit trade function (Stocks) with improved UI and validation
@@ -176,23 +175,29 @@ def edit_stock_trade(trade_data):
     with col1:
         # Basic Information - IMPROVED DATE PARSING
         try:
-            # Attempt to parse date with multiple formats
-            date_obj = None
-            date_formats = ['%Y-%m-%d', '%d-%m-%Y', '%B %d, %Y', '%Y/%m/%d']
-            
-            for fmt in date_formats:
-                try:
-                    date_obj = datetime.strptime(trade_data['Date'], fmt)
-                    break
-                except ValueError:
-                    continue
-                    
-            if date_obj is None:
-                date_obj = datetime.now()
-                st.warning(f"Could not parse date '{trade_data['Date']}'. Using current date instead.")
+            # Use more flexible date parsing
+            date_str = trade_data['Date']
+            try:
+                # Try parsing with pandas (more flexible)
+                import pandas as pd
+                date_obj = pd.to_datetime(date_str).to_pydatetime()
+            except:
+                # Fallback to manual parsing with different formats
+                date_formats = ['%Y-%m-%d', '%d-%m-%Y', '%B %d, %Y', '%Y/%m/%d']
+                date_obj = None
+                for fmt in date_formats:
+                    try:
+                        date_obj = datetime.strptime(date_str, fmt)
+                        break
+                    except ValueError:
+                        continue
+                
+                if date_obj is None:
+                    date_obj = datetime.now()
+                    st.warning(f"Could not parse date '{date_str}'. Using current date instead.")
         except Exception as e:
             date_obj = datetime.now()
-            st.warning(f"Date parsing error: {str(e)}. Using current date.")
+            st.warning(f"Date parsing error: {e}. Using current date.")
         
         new_date = st.date_input(
             "Trade Date",
@@ -288,6 +293,9 @@ def edit_stock_trade(trade_data):
             cursor = conn.cursor()
             
             try:
+                # Format the date as YYYY-MM-DD for consistent storage
+                formatted_date = new_date.strftime('%Y-%m-%d')
+                
                 cursor.execute("""
                     UPDATE trades
                     SET date = ?,
@@ -300,7 +308,7 @@ def edit_stock_trade(trade_data):
                         total_amount = ?
                     WHERE memo_number = ? AND stock = ?
                 """, (
-                    new_date.strftime('%Y-%m-%d'),
+                    formatted_date,
                     new_stock,
                     new_shares,
                     new_rate,
@@ -491,23 +499,29 @@ def edit_metal_trade(trade_data):
     with col1:
         # Date - IMPROVED DATE PARSING
         try:
-            # Attempt to parse date with multiple formats
-            date_obj = None
-            date_formats = ['%Y-%m-%d', '%d-%m-%Y', '%B %d, %Y', '%Y/%m/%d']
-            
-            for fmt in date_formats:
-                try:
-                    date_obj = datetime.strptime(trade_data['Date'], fmt)
-                    break
-                except ValueError:
-                    continue
-                    
-            if date_obj is None:
-                date_obj = datetime.now()
-                st.warning(f"Could not parse date '{trade_data['Date']}'. Using current date instead.")
+            # Use more flexible date parsing
+            date_str = trade_data['Date']
+            try:
+                # Try parsing with pandas (more flexible)
+                import pandas as pd
+                date_obj = pd.to_datetime(date_str).to_pydatetime()
+            except:
+                # Fallback to manual parsing with different formats
+                date_formats = ['%Y-%m-%d', '%d-%m-%Y', '%B %d, %Y', '%Y/%m/%d']
+                date_obj = None
+                for fmt in date_formats:
+                    try:
+                        date_obj = datetime.strptime(date_str, fmt)
+                        break
+                    except ValueError:
+                        continue
+                
+                if date_obj is None:
+                    date_obj = datetime.now()
+                    st.warning(f"Could not parse date '{date_str}'. Using current date instead.")
         except Exception as e:
             date_obj = datetime.now()
-            st.warning(f"Date parsing error: {str(e)}. Using current date.")
+            st.warning(f"Date parsing error: {e}. Using current date.")
 
         new_date = st.date_input("Trade Date", value=date_obj)
         new_metal = st.text_input("Metal Name", value=trade_data['Metal'])
@@ -548,6 +562,9 @@ def edit_metal_trade(trade_data):
             conn = get_db_connection()
             cursor = conn.cursor()
             try:
+                # Format the date as YYYY-MM-DD for consistent storage
+                formatted_date = new_date.strftime('%Y-%m-%d')
+                
                 cursor.execute("""
                     UPDATE metal_trades
                     SET date = ?,
@@ -558,7 +575,7 @@ def edit_metal_trade(trade_data):
                         total_cost = ?
                     WHERE id = ?
                 """, (
-                    new_date.strftime('%Y-%m-%d'),
+                    formatted_date,
                     new_metal,
                     new_weight,
                     new_karat,
@@ -719,24 +736,31 @@ def edit_dividend(div_data):
 
     col1, col2 = st.columns(2)
     with col1:
+        # Improved Date Parsing
         try:
-            # Attempt to parse date with multiple formats
-            date_obj = None
-            date_formats = ['%Y-%m-%d', '%d-%m-%Y', '%B %d, %Y', '%Y/%m/%d']
-            
-            for fmt in date_formats:
-                try:
-                    date_obj = datetime.strptime(div_data['Payment Date'], fmt)
-                    break
-                except ValueError:
-                    continue
-                    
-            if date_obj is None:
-                date_obj = datetime.now()
-                st.warning(f"Could not parse date '{div_data['Payment Date']}'. Using current date instead.")
+            # Use more flexible date parsing
+            date_str = div_data['Payment Date']
+            try:
+                # Try parsing with pandas (more flexible)
+                import pandas as pd
+                date_obj = pd.to_datetime(date_str).to_pydatetime()
+            except:
+                # Fallback to manual parsing with different formats
+                date_formats = ['%Y-%m-%d', '%d-%m-%Y', '%B %d, %Y', '%Y/%m/%d']
+                date_obj = None
+                for fmt in date_formats:
+                    try:
+                        date_obj = datetime.strptime(date_str, fmt)
+                        break
+                    except ValueError:
+                        continue
+                
+                if date_obj is None:
+                    date_obj = datetime.now()
+                    st.warning(f"Could not parse date '{date_str}'. Using current date instead.")
         except Exception as e:
             date_obj = datetime.now()
-            st.warning(f"Date parsing error: {str(e)}. Using current date.")
+            st.warning(f"Date parsing error: {e}. Using current date.")
             
         new_date = st.date_input("Payment Date", value=date_obj)
         new_stock = st.text_input("Stock Name", value=div_data['Stock'])

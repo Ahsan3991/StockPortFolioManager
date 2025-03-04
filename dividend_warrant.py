@@ -17,45 +17,45 @@ def insert_dividend(warrant_no, payment_date, stock_name, rate_per_security, num
     try:
         st.info(f"Processing dividend for warrant {warrant_no}")
         
-        
         # First, ensure the warrant exists in the warrants table
         cursor.execute("INSERT OR IGNORE INTO warrants (warrant_no) VALUES (?)", (warrant_no,))
         
-        # Normalize date format to YYYY-MM-DD format for consistent storage
+        # Use more robust date handling
         try:
-            # Check what format the date is in
-            if isinstance(payment_date, str):
-                # Try different date formats
-                try:
-                    # Try DD-MM-YYYY format
-                    if '-' in payment_date:
-                        parts = payment_date.split('-')
-                        if len(parts[0]) == 2:  # DD-MM-YYYY
-                            from datetime import datetime
-                            date_obj = datetime.strptime(payment_date, '%d-%m-%Y')
-                            payment_date = date_obj.strftime('%Y-%m-%d')
-                    # Try YYYY/MM/DD format        
-                    elif '/' in payment_date:
-                        parts = payment_date.split('/')
-                        if len(parts[0]) == 4:  # YYYY/MM/DD
-                            from datetime import datetime
-                            date_obj = datetime.strptime(payment_date, '%Y/%m/%d')
-                            payment_date = date_obj.strftime('%Y-%m-%d')
-                except Exception as e:
-                    # If date parsing fails, just use the date as is
-                    st.warning(f"Date format conversion issue: {e}. Using date as provided.")
-        except Exception as e:
-            st.warning(f"Error handling date format: {str(e)}")
+            # Parse with pandas for flexibility
+            import pandas as pd
+            date_obj = pd.to_datetime(payment_date)
+            normalized_date = date_obj.strftime('%Y-%m-%d')
+        except:
+            # Try various formats manually
+            try:
+                # If payment_date is already a datetime object
+                if isinstance(payment_date, datetime):
+                    normalized_date = payment_date.strftime('%Y-%m-%d')
+                else:
+                    # Try different formats
+                    formats = ['%Y-%m-%d', '%d-%m-%Y', '%m-%d-%Y', '%Y/%m/%d', '%d/%m/%Y', '%B %d, %Y']
+                    for fmt in formats:
+                        try:
+                            date_obj = datetime.strptime(payment_date, fmt)
+                            normalized_date = date_obj.strftime('%Y-%m-%d')
+                            break
+                        except ValueError:
+                            continue
+                    else:
+                        # If no format works, use original
+                        normalized_date = str(payment_date)
+            except:
+                # Just use the original if all parsing fails
+                normalized_date = str(payment_date)
         
-        # Then insert the dividend details
-        from utils import normalize_date_format
-        normalize_date = normalize_date_format(payment_date)
+        # Insert the dividend details with normalized date
         cursor.execute("""
             INSERT INTO dividends (
                 warrant_no, payment_date, stock_name, rate_per_security, 
                 number_of_securities, amount_of_dividend, tax_deducted, amount_paid
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (warrant_no, normalize_date, stock_name, rate_per_security, 
+        """, (warrant_no, normalized_date, stock_name, rate_per_security, 
               number_of_securities, amount_of_dividend, tax_deducted, amount_paid))
         
         conn.commit()
@@ -66,7 +66,7 @@ def insert_dividend(warrant_no, payment_date, stock_name, rate_per_security, num
         return False
     finally:
         conn.close()
-
+        
 def display_stored_dividends():
     """Displays all stored dividends in a table format."""
     from db_utils import get_db_connection
