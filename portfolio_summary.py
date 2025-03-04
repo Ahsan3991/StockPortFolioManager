@@ -647,7 +647,7 @@ def view_portfolio_summary():
             total_open_pl = df["Open P/L"].sum(skipna=True)
             
             # Calculate total investment
-            total_investment = df["Total Investment"].sum()
+            total_investment = df["Initial Investment"].sum()
             
             # Calculate total portfolio value
             total_portfolio_value = total_investment + total_open_pl
@@ -659,7 +659,7 @@ def view_portfolio_summary():
             df['Avg. Buy Price'] = df['Avg. Buy Price'].apply(lambda x: f"Rs. {x:,.2f}")
             df['Previous Close'] = df['Previous Close'].apply(lambda x: f"Rs. {x:,.2f}" if isinstance(x, (int, float)) else "N/A")
             df['Current Value'] = df['Current Value'].apply(lambda x: f"Rs. {x:,.2f}" if isinstance(x, (int, float)) else "N/A")
-            df['Total Investment'] = df['Total Investment'].apply(lambda x: f"Rs. {x:,.2f}")
+            df['Initial Investment'] = df['Initial Investment'].apply(lambda x: f"Rs. {x:,.2f}")
             df['Total Sales'] = df['Total Sales'].apply(lambda x: f"Rs. {x:,.2f}")
             df['Total Tax'] = df['Total Tax'].apply(lambda x: f"Rs. {x:,.2f}")
             df['Open P/L'] = df['Open P/L'].apply(lambda x: f"Rs. {x:,.2f}" if isinstance(x, (int, float)) else "N/A")
@@ -675,9 +675,9 @@ def view_portfolio_summary():
             
             with col1:
                 st.metric(
-                    "Total Investment",
+                    "Initial Investment",
                     f"Rs. {total_investment:,.2f}",
-                    help="Total amount invested in current positions"
+                    help="Original amount invested in current positions"
                 )
             
             with col2:
