@@ -37,11 +37,11 @@ def get_portfolio_positions():
     from db_utils import get_db_connection
     conn = get_db_connection()
     cursor = conn.cursor()
-
+    
     try:
         # Get buy positions with proper grouping
         cursor.execute("""
-            SELECT 
+            SELECT
                 UPPER(TRIM(stock)) as stock_name,
                 SUM(quantity) as total_bought,
                 CAST(SUM(quantity * rate) AS FLOAT) / CAST(SUM(quantity) AS FLOAT) as avg_price,
@@ -56,10 +56,10 @@ def get_portfolio_positions():
             'avg_price': row[2],
             'investment': row[3]
         } for row in cursor.fetchall()}
-
+        
         # Get sell positions with proper grouping
         cursor.execute("""
-            SELECT 
+            SELECT
                 UPPER(TRIM(stock)) as stock_name,
                 SUM(quantity) as total_sold,
                 SUM(sale_amount) as total_sales,
@@ -73,7 +73,7 @@ def get_portfolio_positions():
             'total_sales': row[2],
             'total_tax': row[3]
         } for row in cursor.fetchall()}
-
+        
         # Calculate current positions
         positions = []
         for stock in buy_positions:
@@ -83,19 +83,19 @@ def get_portfolio_positions():
                 'total_sales': 0,
                 'total_tax': 0
             })
-
+            
             remaining = buy_data['total_bought'] - sell_data['total_sold']
             if remaining > 0:
                 # Fetch previous close price (NO ".KAR" suffix)
                 previous_close = get_psx_stock_price(stock)
-
+                
                 # Calculate P/L if price is available
                 if previous_close is not None:
                     open_pl = (previous_close - buy_data["avg_price"]) * remaining
                     current_value = previous_close * remaining
                 else:
                     open_pl, current_value = None, None
-
+                
                 positions.append({
                     'Stock': stock,
                     'Total Bought': buy_data['total_bought'],
@@ -109,11 +109,15 @@ def get_portfolio_positions():
                     'Total Tax': sell_data['total_tax'],
                     'Open P/L': round(open_pl, 2) if open_pl is not None else None,
                 })
-
-        return positions
+        
+        # Create DataFrame and rename column for display
+        result = pd.DataFrame(positions)
+        result = result.rename(columns={'Total Investment': 'Initial Investment'})
+        
+        return result
     finally:
         conn.close()
-
+        
 def portfolio_distribution():
     """Displays the portfolio distribution with multiple options (Shares vs Wealth)."""
     positions = get_portfolio_positions()
