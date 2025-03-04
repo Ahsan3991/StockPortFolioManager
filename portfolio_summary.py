@@ -110,14 +110,10 @@ def get_portfolio_positions():
                     'Open P/L': round(open_pl, 2) if open_pl is not None else None,
                 })
         
-        # Create DataFrame and rename column for display
-        result = pd.DataFrame(positions)
-        result = result.rename(columns={'Total Investment': 'Initial Investment'})
-        
-        return result
+        return positions  # Return the list as before
     finally:
         conn.close()
-        
+
 def portfolio_distribution():
     """Displays the portfolio distribution with multiple options (Shares vs Wealth)."""
     positions = get_portfolio_positions()
@@ -627,7 +623,7 @@ def view_metal_portfolio_summary():
     create_metal_price_history_chart()
 
 def view_portfolio_summary():
-    """Displays comprehensive portfolio summary with P/L and dividends."""
+    """Displays comprehensive portfolio summary with P/L, dividends and metal portfolio."""
     st.subheader("📝 Holdings Table")
     
     # Create tabs
@@ -640,6 +636,9 @@ def view_portfolio_summary():
             st.warning("No active positions found in portfolio.")
         else:
             df = pd.DataFrame(positions)
+
+            # Rename the column for display only
+            df = df.rename(columns={'Total Investment': 'Initial Investment'})
 
             # Convert "Open P/L" to numeric while handling None values
             df["Open P/L"] = pd.to_numeric(df["Open P/L"], errors="coerce")
