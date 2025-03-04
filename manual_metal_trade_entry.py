@@ -55,10 +55,13 @@ def save_metal_trade(metal, weight, karat, purchase_price, total_cost, date):
     conn = get_db_connection()
     cursor = conn.cursor()
     
+    from utils import normalize_date_format
+    normalize_date = normalize_date_format(date)
+    
     cursor.execute('''
         INSERT INTO metal_trades (date, metal, weight, karat, purchase_price, total_cost)
         VALUES (?, ?, ?, ?, ?, ?)
-        ''', (date, metal, weight, karat, purchase_price, total_cost))
+        ''', (normalize_date, metal, weight, karat, purchase_price, total_cost))
     
     conn.commit()
     conn.close()

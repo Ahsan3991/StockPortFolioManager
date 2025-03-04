@@ -36,11 +36,13 @@ def insert_trade(date, memo_number, stock, quantity, rate, comm_amount, cdc_char
             cursor.execute("PRAGMA journal_mode=WAL;")
 
             total_amount = float(str(total_amount).replace(",", ""))
+            from utils import normalize_date_format
+            normalize_date = normalize_date_format(date)
 
             cursor.execute("""
                 INSERT INTO trades (date, memo_number, stock, quantity, rate, comm_amount, cdc_charges, sales_tax, total_amount, type) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (date, memo_number, stock, quantity, rate, comm_amount, cdc_charges, sales_tax, total_amount, trade_type))
+            """, (normalize_date, memo_number, stock, quantity, rate, comm_amount, cdc_charges, sales_tax, total_amount, trade_type))
 
             conn.commit()
             return

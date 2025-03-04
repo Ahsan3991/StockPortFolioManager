@@ -174,15 +174,25 @@ def edit_stock_trade(trade_data):
     col1, col2 = st.columns(2)
     
     with col1:
-        # Basic Information
+        # Basic Information - IMPROVED DATE PARSING
         try:
-            date_obj = datetime.strptime(trade_data['Date'], '%Y-%m-%d')
-        except ValueError:
-            try:
-                date_obj = datetime.strptime(trade_data['Date'], '%B %d, %Y')
-            except ValueError:
+            # Attempt to parse date with multiple formats
+            date_obj = None
+            date_formats = ['%Y-%m-%d', '%d-%m-%Y', '%B %d, %Y', '%Y/%m/%d']
+            
+            for fmt in date_formats:
+                try:
+                    date_obj = datetime.strptime(trade_data['Date'], fmt)
+                    break
+                except ValueError:
+                    continue
+                    
+            if date_obj is None:
                 date_obj = datetime.now()
                 st.warning(f"Could not parse date '{trade_data['Date']}'. Using current date instead.")
+        except Exception as e:
+            date_obj = datetime.now()
+            st.warning(f"Date parsing error: {str(e)}. Using current date.")
         
         new_date = st.date_input(
             "Trade Date",
@@ -479,19 +489,30 @@ def edit_metal_trade(trade_data):
 
     col1, col2 = st.columns(2)
     with col1:
-        # Date
+        # Date - IMPROVED DATE PARSING
         try:
-            date_obj = datetime.strptime(trade_data['Date'], '%Y-%m-%d')
-        except ValueError:
-            try:
-                date_obj = datetime.strptime(trade_data['Date'], '%B %d, %Y')
-            except ValueError:
+            # Attempt to parse date with multiple formats
+            date_obj = None
+            date_formats = ['%Y-%m-%d', '%d-%m-%Y', '%B %d, %Y', '%Y/%m/%d']
+            
+            for fmt in date_formats:
+                try:
+                    date_obj = datetime.strptime(trade_data['Date'], fmt)
+                    break
+                except ValueError:
+                    continue
+                    
+            if date_obj is None:
                 date_obj = datetime.now()
                 st.warning(f"Could not parse date '{trade_data['Date']}'. Using current date instead.")
+        except Exception as e:
+            date_obj = datetime.now()
+            st.warning(f"Date parsing error: {str(e)}. Using current date.")
 
         new_date = st.date_input("Trade Date", value=date_obj)
         new_metal = st.text_input("Metal Name", value=trade_data['Metal'])
         new_karat = st.number_input("Karat", min_value=1, max_value=24, value=int(trade_data['Karat']))
+        
     with col2:
         new_weight = st.number_input("Weight (g)", min_value=0.01, value=float(str(trade_data['Weight (g)']).replace(',', '')))
         new_purchase_price = st.number_input("Purchase Price (Rs/g)", min_value=0.01, value=float(str(trade_data['Purchase Price']).replace('Rs. ', '').replace(',', '')))
@@ -699,12 +720,24 @@ def edit_dividend(div_data):
     col1, col2 = st.columns(2)
     with col1:
         try:
-            date_obj = datetime.strptime(div_data['Payment Date'], '%Y-%m-%d')
-        except ValueError:
-            try:
-                date_obj = datetime.strptime(div_data['Payment Date'], '%B %d, %Y')
-            except ValueError:
+            # Attempt to parse date with multiple formats
+            date_obj = None
+            date_formats = ['%Y-%m-%d', '%d-%m-%Y', '%B %d, %Y', '%Y/%m/%d']
+            
+            for fmt in date_formats:
+                try:
+                    date_obj = datetime.strptime(div_data['Payment Date'], fmt)
+                    break
+                except ValueError:
+                    continue
+                    
+            if date_obj is None:
                 date_obj = datetime.now()
+                st.warning(f"Could not parse date '{div_data['Payment Date']}'. Using current date instead.")
+        except Exception as e:
+            date_obj = datetime.now()
+            st.warning(f"Date parsing error: {str(e)}. Using current date.")
+            
         new_date = st.date_input("Payment Date", value=date_obj)
         new_stock = st.text_input("Stock Name", value=div_data['Stock'])
         new_warrant = st.text_input("Warrant No", value=div_data['Warrant No'])
@@ -741,6 +774,9 @@ def edit_dividend(div_data):
             conn = get_db_connection()
             cursor = conn.cursor()
             try:
+                # Format date as YYYY-MM-DD for consistent storage
+                formatted_date = new_date.strftime('%Y-%m-%d')
+                
                 cursor.execute("""
                     UPDATE dividends
                     SET 
@@ -754,7 +790,7 @@ def edit_dividend(div_data):
                         amount_paid = ?
                     WHERE id = ?
                 """, (
-                    new_date.strftime('%Y-%m-%d'),
+                    formatted_date,
                     new_stock,
                     new_warrant,
                     new_rate,

@@ -289,6 +289,7 @@ def calculate_total_dividends():
     finally:
         conn.close()
 
+# Fix for view_dividend_income function in portfolio_summary.py
 def view_dividend_income():
     """Displays dividend income summary along with a line chart of dividends over time."""
     st.subheader("📈 Dividend Income Over Time")
@@ -308,8 +309,31 @@ def view_dividend_income():
     if dividend_df.empty:
         st.warning("No dividend records found.")
     else:
-        # Convert date column to datetime
-        dividend_df['Date'] = pd.to_datetime(dividend_df['Date'])
+        # Convert date column to datetime with robust error handling
+        try:
+            # First try with 'mixed' format to handle various formats
+            dividend_df['Date'] = pd.to_datetime(dividend_df['Date'], format='mixed')
+        except (ValueError, TypeError):
+            try:
+                # Then try with day-month-year format (most likely format based on error)
+                dividend_df['Date'] = pd.to_datetime(dividend_df['Date'], format='%d-%m-%Y')
+            except (ValueError, TypeError):
+                try:
+                    # If that fails, try year-month-day
+                    dividend_df['Date'] = pd.to_datetime(dividend_df['Date'], format='%Y-%m-%d')
+                except (ValueError, TypeError):
+                    try:
+                        # Last attempt - let pandas infer the format
+                        dividend_df['Date'] = pd.to_datetime(dividend_df['Date'], errors='coerce')
+                        # Drop any rows where date parsing failed
+                        dividend_df = dividend_df.dropna(subset=['Date'])
+                        
+                        if dividend_df.empty:
+                            st.error("Failed to parse any dates. Please check date formatting.")
+                            return
+                    except Exception as e:
+                        st.error(f"Error parsing dates: {str(e)}")
+                        return
 
         # Create line chart
         fig = px.line(dividend_df, x='Date', y='Net Dividend', 
@@ -322,6 +346,7 @@ def view_dividend_income():
         # Display raw dividend data
         st.write("### Dividend Details")
         st.dataframe(dividend_df.style.format({"Net Dividend": "Rs. {:.2f}"}), hide_index=True)
+        
 
 def get_metal_portfolio():
     """Gets current position for all metals with real-time pricing and calculates P/L."""

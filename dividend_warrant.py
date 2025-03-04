@@ -17,16 +17,45 @@ def insert_dividend(warrant_no, payment_date, stock_name, rate_per_security, num
     try:
         st.info(f"Processing dividend for warrant {warrant_no}")
         
+        
         # First, ensure the warrant exists in the warrants table
         cursor.execute("INSERT OR IGNORE INTO warrants (warrant_no) VALUES (?)", (warrant_no,))
         
+        # Normalize date format to YYYY-MM-DD format for consistent storage
+        try:
+            # Check what format the date is in
+            if isinstance(payment_date, str):
+                # Try different date formats
+                try:
+                    # Try DD-MM-YYYY format
+                    if '-' in payment_date:
+                        parts = payment_date.split('-')
+                        if len(parts[0]) == 2:  # DD-MM-YYYY
+                            from datetime import datetime
+                            date_obj = datetime.strptime(payment_date, '%d-%m-%Y')
+                            payment_date = date_obj.strftime('%Y-%m-%d')
+                    # Try YYYY/MM/DD format        
+                    elif '/' in payment_date:
+                        parts = payment_date.split('/')
+                        if len(parts[0]) == 4:  # YYYY/MM/DD
+                            from datetime import datetime
+                            date_obj = datetime.strptime(payment_date, '%Y/%m/%d')
+                            payment_date = date_obj.strftime('%Y-%m-%d')
+                except Exception as e:
+                    # If date parsing fails, just use the date as is
+                    st.warning(f"Date format conversion issue: {e}. Using date as provided.")
+        except Exception as e:
+            st.warning(f"Error handling date format: {str(e)}")
+        
         # Then insert the dividend details
+        from utils import normalize_date_format
+        normalize_date = normalize_date_format(payment_date)
         cursor.execute("""
             INSERT INTO dividends (
                 warrant_no, payment_date, stock_name, rate_per_security, 
                 number_of_securities, amount_of_dividend, tax_deducted, amount_paid
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (warrant_no, payment_date, stock_name, rate_per_security, 
+        """, (warrant_no, normalize_date, stock_name, rate_per_security, 
               number_of_securities, amount_of_dividend, tax_deducted, amount_paid))
         
         conn.commit()
