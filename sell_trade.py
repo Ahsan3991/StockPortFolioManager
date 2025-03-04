@@ -179,24 +179,26 @@ def sell_trade():
             # Generate unique memo number for the sale
             memo_number = f"S{datetime.now().strftime('%Y%m%d%H%M%S')}"
             
-            # Insert sell trade record
+            # Insert sell trade record - FIXED COLUMN NAME
             cursor.execute("""
                 INSERT INTO sell_trades (
                     stock,
                     quantity,
                     rate,
                     sale_amount,
-                    tax_deducted,
+                    cgt_amount,
+                    cgt_percentage,
                     net_amount,
                     sell_date,
                     memo_number
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 selected_stock,
                 quantity,
                 rate,
                 sale_amount,
                 cgt_value,
+                cgt_percentage,
                 net_amount,
                 datetime.now().strftime('%Y-%m-%d'),
                 memo_number
