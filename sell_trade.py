@@ -134,9 +134,17 @@ def sell_trade():
     
     # Calculate values
     sale_amount = quantity * rate
-    cgt_value = (cgt_percentage / 100) * sale_amount
-    net_amount = sale_amount - cgt_value
+    purchase_amount = quantity * avg_buy_price
+    capital_gain = sale_amount - purchase_amount  # Calculate actual profit/loss
     
+    # Only apply CGT if there's a profit (capital gain)
+    if capital_gain > 0:
+        cgt_value = (cgt_percentage / 100) * capital_gain
+    else:
+        cgt_value = 0  # No CGT on capital loss
+
+    net_amount = sale_amount - cgt_value
+
     # Display summary
     st.subheader("Transaction Summary")
     
