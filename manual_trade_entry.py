@@ -63,17 +63,21 @@ def manual_trade_entry():
         purchase_date = st.date_input("Date of Purchase (Required)", help="Select the date when the trade was executed")
         formatted_date = purchase_date.strftime('%B %d, %Y')
         
-        # New dropdown + search for stock symbols
+        # New dropdown + search for stock symbols with empty default option
+        symbol_options = [""] + symbol_options  # Add empty option at the beginning
         selected_symbol = st.selectbox(
             "Stock Ticker Symbol (Required)",
             options=symbol_options,
             help="Select or type to search for the stock symbol (e.g., BOP for Bank of Punjab)",
-            key="stock_symbol_select"
+            key="stock_symbol_select",
+            index=0  # Start with the empty option selected
         )
         
-        # Display the full name of the selected stock for verification
-        if selected_symbol in all_stocks:
+        # Display the full name of the selected stock only if something is actually selected
+        if selected_symbol and selected_symbol in all_stocks:
             st.info(f"Selected: {all_stocks[selected_symbol]['name']} (Sector: {all_stocks[selected_symbol]['sector']})")
+        elif not selected_symbol:
+            st.warning("Please select a stock ticker symbol")
         
         number_of_stocks = st.number_input("Number of Shares (Required)", min_value=1, format="%d",
                                           help="Enter the total number of shares")
@@ -104,8 +108,11 @@ def manual_trade_entry():
 
     with button_col1:
         if st.button("➕ Add Another Trade"):
-            if not selected_symbol or rate_per_share <= 0:
-                st.error("Please fill in all required fields before adding another trade.")
+            if not selected_symbol:
+                st.error("Please select a stock ticker symbol.")
+                return
+            elif rate_per_share <= 0:
+                st.error("Rate per share must be greater than zero.")
                 return
 
             trade_data = {
@@ -126,8 +133,11 @@ def manual_trade_entry():
 
     with button_col2:
         if st.button("✅ Submit Trade(s)", type="primary"):
-            if not selected_symbol or rate_per_share <= 0:
-                st.error("Please fill in all required fields.")
+            if not selected_symbol:
+                st.error("Please select a stock ticker symbol.")
+                return
+            elif rate_per_share <= 0:
+                st.error("Rate per share must be greater than zero.")
                 return
 
             if selected_symbol and rate_per_share > 0:
