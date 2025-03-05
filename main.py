@@ -4,7 +4,7 @@ import pandas as pd
 import sqlite3
 import os
 import time  # Added import for sleep functionality
-from trade_receipt import manual_trade_entry
+from manual_trade_entry import manual_trade_entry
 from dividend_warrant import manual_dividend_entry
 from sell_trade import sell_trade
 from view_trades import view_trades
