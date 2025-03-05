@@ -32,7 +32,7 @@ def manual_trade_entry():
     with col1:
         purchase_date = st.date_input("Date of Purchase (Required)", help="Select the date when the trade was executed")
         formatted_date = purchase_date.strftime('%B %d, %Y')
-        stock_name = st.text_input("Stock Name (Required)", help="Enter the name of the stock")
+        stock_name = st.text_input("Stock Ticker Symbol (Required)", help="Enter the symbol of the stock (e.g., BOP for Bank of Punjab)")
         number_of_stocks = st.number_input("Number of Shares (Required)", min_value=1, format="%d",
                                           help="Enter the total number of shares")
     with col2:
