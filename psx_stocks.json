@@ -1,20 +1,168 @@
 {
     "COMMERCIAL_BANKS": {
+      "ABL": "Allied Bank Limited",
+      "AKBL": "Askari Bank Limited",
+      "BAFL": "Bank Alfalah Limited",
       "BOP": "The Bank of Punjab",
       "BOK": "The Bank of Khyber",
-      "AKBLTFC6": "Askari Bank(TFC6)"
+      "BAHL": "Bank AL-Habib Limited",
+      "HBL": "Habib Bank Limited",
+      "HMB": "Habib Metropolitan Bank Limited",
+      "JSBL": "JS Bank Limited",
+      "MCB": "MCB Bank Limited",
+      "MEBL": "Meezan Bank Limited",
+      "NBP": "National Bank of Pakistan",
+      "SCBPL": "Standard Chartered Bank (Pakistan) Limited",
+      "SNBL": "Soneri Bank Limited",
+      "SBL": "Samba Bank Limited",
+      "SILK": "Silkbank Limited",
+      "SMBL": "Summit Bank Limited",
+      "UBL": "United Bank Limited",
+      "BIPL": "BankIslami Pakistan Limited",
+      "FABL": "Faysal Bank Limited",
+      "AKBL.PSX": "Askari Bank Limited (PSX)"
     },
-    "BILLS_AND_BONDS": {
-      "BOPTFC2": "Bank Of Punjab(TFC"
+    "CEMENT": {
+      "ACPL": "Attock Cement Pakistan Limited",
+      "BWCL": "Bestway Cement Limited",
+      "CHCC": "Cherat Cement Company Limited",
+      "DCL": "Dewan Cement Limited",
+      "DGKC": "D.G. Khan Cement Company Limited",
+      "FCCL": "Fauji Cement Company Limited",
+      "FECTC": "Fecto Cement Limited",
+      "FLYNG": "Flying Cement Company Limited",
+      "GWLC": "Gharibwal Cement Limited",
+      "JVDC": "Javedan Corporation Limited",
+      "KOHC": "Kohat Cement Company Limited",
+      "LUCK": "Lucky Cement Limited",
+      "MLCF": "Maple Leaf Cement Factory Limited",
+      "PIOC": "Pioneer Cement Limited",
+      "POWER": "Power Cement Limited",
+      "THCCL": "Thatta Cement Company Limited"
     },
-    "PHARMACEUTICALS": {
-      "ABOT": "Abbott Laboratories (Pakistan) Limited"
+    "OIL_GAS_EXPLORATION": {
+      "MARI": "Mari Petroleum Company Limited",
+      "OGDC": "Oil & Gas Development Company Limited",
+      "PPL": "Pakistan Petroleum Limited",
+      "POL": "Pakistan Oilfields Limited"
     },
     "OIL_GAS_MARKETING": {
+      "APL": "Attock Petroleum Limited",
+      "HASCOL": "Hascol Petroleum Limited",
+      "PSO": "Pakistan State Oil Company Limited",
+      "SHEL": "Shell Pakistan Limited",
+      "SNGP": "Sui Northern Gas Pipelines Limited",
+      "SSGC": "Sui Southern Gas Company Limited",
+      "HTL": "Hi-Tech Lubricants Limited",
+      "GAS": "Gul Ahmed Energy Limited",
+      "BYCO": "Byco Petroleum Pakistan Limited",
       "OBOY": "Oilboy Energy Limited",
-      "OBOYR1": "Oilboy Energy(R)"
+      "PKGP": "Pakistan Gas Port Consortium Limited"
+    },
+    "PHARMACEUTICALS": {
+      "ABOT": "Abbott Laboratories (Pakistan) Limited",
+      "AGP": "AGP Limited",
+      "FEROZ": "Ferozsons Laboratories Limited",
+      "GLAXO": "GlaxoSmithKline Pakistan Limited",
+      "HINOON": "Highnoon Laboratories Limited",
+      "IBL": "IBL HealthCare Limited",
+      "IDYM": "IDM Pharma Limited",
+      "IBLHL": "IBL Holdings Limited",
+      "OTSU": "Otsuka Pakistan Limited",
+      "PFIZER": "Pfizer Pakistan Limited",
+      "SAPL": "Sanofi-Aventis Pakistan Limited",
+      "SEARL": "The Searle Company Limited",
+      "SMRTECH": "Smar Tech Laboratories Limited",
+      "WELCOX": "Welcox Pharmaceuticals Limited",
+      "WYETH": "Wyeth Pakistan Limited"
+    },
+    "TEXTILE_COMPOSITE": {
+      "ATIL": "Aruj Textile Mills Limited",
+      "ADMM": "Artistic Denim Mills Limited",
+      "CLOV": "Clover Pakistan Limited",
+      "GATM": "Gul Ahmed Textile Mills Limited",
+      "GULT": "Gulistan Textile Mills Limited",
+      "ICTEX": "Ibrahim Textile Mills Limited",
+      "ILP": "Interloop Limited",
+      "KTML": "Kohinoor Textile Mills Limited",
+      "NCL": "Nishat Chunian Limited",
+      "NML": "Nishat Mills Limited",
+      "SAPT": "Sapphire Textile Mills Limited",
+      "STCL": "Service Textile Industries Limited",
+      "TOWL": "Towellers Limited"
+    },
+    "POWER_GENERATION": {
+      "HUBC": "The Hub Power Company Limited",
+      "KEL": "K-Electric Limited",
+      "KAPCO": "Kot Addu Power Company Limited",
+      "LPL": "Lalpir Power Limited",
+      "NPL": "Nishat Power Limited",
+      "NCPL": "Nishat Chunian Power Limited",
+      "PKGP": "Pakgen Power Limited",
+      "SPWL": "Saif Power Limited",
+      "EPQL": "Engro Powergen Qadirpur Limited",
+      "HPFL": "Hub Power Holdings Limited",
+      "ATRL": "Attock Refinery Limited",
+      "BYCO": "Byco Petroleum Pakistan Limited",
+      "NRL": "National Refinery Limited",
+      "PRL": "Pakistan Refinery Limited"
     },
     "ENGINEERING": {
-      "BCL": "Bolan Castings Limited"
+      "AGHA": "Agha Steel Industries Limited",
+      "AABS": "Al-Abbas Sugar Mills Limited",
+      "ASL": "Aisha Steel Mills Limited",
+      "ACPS": "Al-Shaheer Corporation Limited",
+      "ASTL": "Amreli Steels Limited",
+      "BCL": "Bolan Castings Limited",
+      "CSAP": "Crescent Steel and Allied Products Limited",
+      "DPRA": "D.P.R.A. Systems Limited",
+      "DSIL": "Dost Steels Limited",
+      "FSMCL": "First SMC Limited",
+      "FFBL": "Fauji Fertilizer Bin Qasim Limited",
+      "FECM": "Frontier Ceramics Limited",
+      "INIL": "International Industries Limited",
+      "ISL": "International Steels Limited",
+      "ITTEFAQ": "Ittefaq Iron Industries Limited",
+      "MATC": "Matco Foods Limited",
+      "MUGHAL": "Mughal Iron & Steel Industries Limited",
+      "WAVES": "Waves Home Appliances Limited"
+    },
+    "TECHNOLOGY_COMMUNICATION": {
+      "AVN": "Avanceon Limited",
+      "HUMNL": "Hum Network Limited",
+      "MDTL": "Media Times Limited",
+      "NETF": "NetSol Financial Suite Limited",
+      "NETSOL": "NetSol Technologies Limited",
+      "OCL": "Octopus Digital Limited",
+      "SYS": "Systems Limited",
+      "TRG": "TRG Pakistan Limited",
+      "TPL": "TPL Corp Limited",
+      "TPLT": "TPL Trakker Limited",
+      "TPLP": "TPL Properties Limited",
+      "WTL": "WorldCall Telecom Limited",
+      "PTC": "Pakistan Telecommunication Company Ltd"
+    },
+    "AUTOMOBILE_ASSEMBLER": {
+      "AGTL": "Al-Ghazi Tractors Limited",
+      "ATLH": "Atlas Honda Limited",
+      "GHNL": "Ghandhara Nissan Limited",
+      "GHNI": "Ghandhara Industries Limited",
+      "HCAR": "Honda Atlas Cars (Pakistan) Limited",
+      "HINO": "Hinopak Motors Limited",
+      "INDU": "Indus Motor Company Limited",
+      "MTL": "Millat Tractors Limited",
+      "PSMC": "Pak Suzuki Motor Company Limited",
+      "SAZEW": "Sazgar Engineering Works Limited"
+    },
+    "FERTILIZER": {
+      "EFERT": "Engro Fertilizers Limited",
+      "ENGRO": "Engro Corporation Limited",
+      "FATIMA": "Fatima Fertilizer Company Limited",
+      "FFBL": "Fauji Fertilizer Bin Qasim Limited",
+      "FFC": "Fauji Fertilizer Company Limited"
+    },
+    "BILLS_AND_BONDS": {
+      "BOPTFC2": "Bank Of Punjab(TFC)",
+      "AKBLTFC6": "Askari Bank(TFC6)"
     }
   }
