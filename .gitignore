@@ -32,7 +32,7 @@ portfolio.db-journal
 .ipynb_checkpoints/
 
 # Ignore Streamlit session state files
-.streamlit/
+#.streamlit/
 
 # Ignore system files
 .DS_Store
