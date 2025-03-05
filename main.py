@@ -33,72 +33,7 @@ st.set_page_config(
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
-    # Force dark theme through Streamlit's built-in theme system
-    menu_items={
-        'Get Help': None,
-        'Report a bug': None,
-        'About': None
-    }
 )
-
-# Force dark theme with stronger overrides
-st.markdown("""
-    <style>
-    /* Force dark mode */
-    .stApp {
-        background-color: #191a16;
-        color: white !important;
-    }
-    
-    /* Override any light mode colors */
-    .stMarkdown, .stMarkdown p, .stText, .stCode, 
-    .stSelectbox label, .stNumberInput label, .stDateInput label,
-    .stTextInput label, .stTextArea label, .stCheckbox label,
-    .stRadio label, .stSlider label, .stHeader, .stSubheader,
-    .stAlert, .stDataFrame, .stTable, .stMetric, .stMetricLabel,
-    .stMetricValue, .stExpander, .stMultiSelect, .stDownloadButton,
-    .stFileUploader, .stPlotlyChart {
-        color: white !important;
-    }
-    
-    /* Ensure even inputs have proper contrast */
-    input, textarea, [role="listbox"], [role="combobox"], select {
-        background-color: #2e2e2e !important;
-        color: white !important;
-    }
-    
-    /* Make sure alerts are visible */
-    .stAlert {
-        background-color: rgba(60, 60, 60, 0.7) !important;
-        border-color: rgba(120, 120, 120, 0.5) !important;
-    }
-    
-    /* Success alerts should still look green */
-    .stAlert.success {
-        border-left-color: #00cc66 !important;
-    }
-    
-    /* Warning alerts should still look orange */
-    .stAlert.warning {
-        border-left-color: #ffaa00 !important;
-    }
-    
-    /* Error alerts should still look red */
-    .stAlert.error {
-        border-left-color: #ff5555 !important;
-    }
-    
-    /* Force sidebar to keep its styling */
-    [data-testid="stSidebar"] {
-        background-color: #8a6d17 !important;
-    }
-    
-    /* Force all text in sidebar to be white */
-    [data-testid="stSidebar"] * {
-        color: white !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
 
 # Custom CSS for overall app styling
 st.markdown("""
