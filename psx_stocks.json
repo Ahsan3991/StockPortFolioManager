@@ -1,0 +1,20 @@
+{
+    "COMMERCIAL_BANKS": {
+      "BOP": "The Bank of Punjab",
+      "BOK": "The Bank of Khyber",
+      "AKBLTFC6": "Askari Bank(TFC6)"
+    },
+    "BILLS_AND_BONDS": {
+      "BOPTFC2": "Bank Of Punjab(TFC"
+    },
+    "PHARMACEUTICALS": {
+      "ABOT": "Abbott Laboratories (Pakistan) Limited"
+    },
+    "OIL_GAS_MARKETING": {
+      "OBOY": "Oilboy Energy Limited",
+      "OBOYR1": "Oilboy Energy(R)"
+    },
+    "ENGINEERING": {
+      "BCL": "Bolan Castings Limited"
+    }
+  }

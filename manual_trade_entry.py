@@ -1,9 +1,35 @@
 import streamlit as st
 import sqlite3
 import time
-#import pandas as pd
-#from datetime import datetime
+import json
+import os
 from trade_receipt import clean_stock_name, display_trades
+
+def load_psx_data():
+    """Load the PSX stock data from JSON file"""
+    try:
+        # Check if the file exists first
+        if os.path.exists("psx_stocks.json"):
+            with open("psx_stocks.json", "r") as f:
+                return json.load(f)
+        else:
+            # If file doesn't exist, show a message and return empty dict
+            st.error("File psx_stocks.json does not exist. Please create it with your PSX stock data.")
+            return {}
+    except Exception as e:
+        st.error(f"Error loading PSX stock data: {e}")
+        return {}
+
+def get_all_stock_symbols():
+    """Extract all stock symbols from the PSX data"""
+    psx_data = load_psx_data()
+    all_symbols = {}
+    
+    for sector, stocks in psx_data.items():
+        for symbol, name in stocks.items():
+            all_symbols[symbol] = {"name": name, "sector": sector}
+    
+    return all_symbols
 
 def manual_trade_entry():
     st.header("Manual Trade Entry")
@@ -28,11 +54,27 @@ def manual_trade_entry():
 
     memo_number = st.session_state.current_memo
 
+    # Get all stock symbols for the dropdown
+    all_stocks = get_all_stock_symbols()
+    symbol_options = list(all_stocks.keys())
+    
     col1, col2 = st.columns(2)
     with col1:
         purchase_date = st.date_input("Date of Purchase (Required)", help="Select the date when the trade was executed")
         formatted_date = purchase_date.strftime('%B %d, %Y')
-        stock_name = st.text_input("Stock Ticker Symbol (Required)", help="Enter the symbol of the stock (e.g., BOP for Bank of Punjab)")
+        
+        # New dropdown + search for stock symbols
+        selected_symbol = st.selectbox(
+            "Stock Ticker Symbol (Required)",
+            options=symbol_options,
+            help="Select or type to search for the stock symbol (e.g., BOP for Bank of Punjab)",
+            key="stock_symbol_select"
+        )
+        
+        # Display the full name of the selected stock for verification
+        if selected_symbol in all_stocks:
+            st.info(f"Selected: {all_stocks[selected_symbol]['name']} (Sector: {all_stocks[selected_symbol]['sector']})")
+        
         number_of_stocks = st.number_input("Number of Shares (Required)", min_value=1, format="%d",
                                           help="Enter the total number of shares")
     with col2:
@@ -62,14 +104,16 @@ def manual_trade_entry():
 
     with button_col1:
         if st.button("➕ Add Another Trade"):
-            if not stock_name or rate_per_share <= 0:
+            if not selected_symbol or rate_per_share <= 0:
                 st.error("Please fill in all required fields before adding another trade.")
                 return
 
             trade_data = {
                 'memo_number': memo_number,
                 'purchase_date': formatted_date,
-                'stock_name': stock_name,
+                'stock_name': selected_symbol,  # Store the symbol
+                'stock_company': all_stocks[selected_symbol]['name'] if selected_symbol in all_stocks else "",  # Store the company name
+                'stock_sector': all_stocks[selected_symbol]['sector'] if selected_symbol in all_stocks else "",  # Store the sector
                 'number_of_stocks': number_of_stocks,
                 'rate_per_share': rate_per_share,
                 'commission_charges': commission_charges,
@@ -78,19 +122,21 @@ def manual_trade_entry():
                 'total_amount': total_amount
             }
             st.session_state.trades_list.append(trade_data)
-            st.success(f"✅ Added {stock_name} to memo: {memo_number}")
+            st.success(f"✅ Added {selected_symbol} to memo: {memo_number}")
 
     with button_col2:
         if st.button("✅ Submit Trade(s)", type="primary"):
-            if not stock_name or rate_per_share <= 0:
+            if not selected_symbol or rate_per_share <= 0:
                 st.error("Please fill in all required fields.")
                 return
 
-            if stock_name and rate_per_share > 0:
+            if selected_symbol and rate_per_share > 0:
                 current_trade = {
                     'memo_number': memo_number,
                     'purchase_date': formatted_date,
-                    'stock_name': stock_name,
+                    'stock_name': selected_symbol,  # Store the symbol
+                    'stock_company': all_stocks[selected_symbol]['name'] if selected_symbol in all_stocks else "",  # Store the company name
+                    'stock_sector': all_stocks[selected_symbol]['sector'] if selected_symbol in all_stocks else "",  # Store the sector
                     'number_of_stocks': number_of_stocks,
                     'rate_per_share': rate_per_share,
                     'commission_charges': commission_charges,
@@ -109,6 +155,8 @@ def manual_trade_entry():
 
                 trades_to_insert = st.session_state.trades_list or [current_trade]
                 for trade in trades_to_insert:
+                    # For now, we'll keep just saving the symbol to the database
+                    # We can modify the database schema later to store additional info if needed
                     cursor.execute("""
                         INSERT INTO trades (
                             date, memo_number, stock, quantity, rate, 
@@ -117,7 +165,7 @@ def manual_trade_entry():
                     """, (
                         trade['purchase_date'],
                         trade['memo_number'],
-                        clean_stock_name(trade['stock_name']),
+                        clean_stock_name(trade['stock_name']),  # Still using clean_stock_name for consistency
                         trade['number_of_stocks'],
                         trade['rate_per_share'],
                         trade['commission_charges'],
