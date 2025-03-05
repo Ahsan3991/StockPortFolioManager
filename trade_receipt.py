@@ -1,11 +1,11 @@
 import streamlit as st
 import sqlite3
-import pdfplumber
-import json
-import re
+#import pdfplumber
+#import json
+#import re
 import time
 import pandas as pd
-from datetime import datetime
+#from datetime import datetime
 
 def clean_stock_name(stock_name):
     if isinstance(stock_name, str):

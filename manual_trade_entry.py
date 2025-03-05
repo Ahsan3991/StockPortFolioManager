@@ -1,9 +1,9 @@
 import streamlit as st
 import sqlite3
 import time
-import pandas as pd
-from datetime import datetime
-from trade_receipt import clean_stock_name, insert_trade, display_trades
+#import pandas as pd
+#from datetime import datetime
+from trade_receipt import clean_stock_name, display_trades
 
 def manual_trade_entry():
     st.header("Manual Trade Entry")
