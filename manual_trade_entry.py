@@ -31,6 +31,21 @@ def get_all_stock_symbols():
     
     return all_symbols
 
+def get_stock_display_options():
+    """Generate stock display options for dropdown showing ticker symbol and company name"""
+    all_stocks = get_all_stock_symbols()
+    
+    # Create display options in format "TICKER - Company Name"
+    display_options = [""]  # Empty option for default/unselected state
+    ticker_to_display = {"": ""}  # Mapping from ticker to display string
+    
+    for symbol, details in all_stocks.items():
+        display = f"{symbol} - {details['name']}"
+        display_options.append(display)
+        ticker_to_display[display] = symbol  # Store mapping to retrieve ticker later
+    
+    return display_options, ticker_to_display
+
 def manual_trade_entry():
     st.header("Manual Trade Entry")
     
@@ -54,28 +69,30 @@ def manual_trade_entry():
 
     memo_number = st.session_state.current_memo
 
-    # Get all stock symbols for the dropdown
+    # Get all stock symbols and prepare display options
     all_stocks = get_all_stock_symbols()
-    symbol_options = list(all_stocks.keys())
+    display_options, ticker_to_display = get_stock_display_options()
     
     col1, col2 = st.columns(2)
     with col1:
         purchase_date = st.date_input("Date of Purchase (Required)", help="Select the date when the trade was executed")
         formatted_date = purchase_date.strftime('%B %d, %Y')
         
-        # New dropdown + search for stock symbols with empty default option
-        symbol_options = [""] + symbol_options  # Add empty option at the beginning
-        selected_symbol = st.selectbox(
+        # Enhanced dropdown with ticker and company name
+        selected_display = st.selectbox(
             "Stock Ticker Symbol (Required)",
-            options=symbol_options,
-            help="Select or type to search for the stock symbol (e.g., BOP for Bank of Punjab)",
+            options=display_options,
+            help="Select or type to search for the stock symbol",
             key="stock_symbol_select",
             index=0  # Start with the empty option selected
         )
         
-        # Display the full name of the selected stock only if something is actually selected
+        # Extract just the ticker symbol for database storage
+        selected_symbol = ticker_to_display.get(selected_display, "")
+        
+        # Show sector information only if a valid selection is made
         if selected_symbol and selected_symbol in all_stocks:
-            st.info(f"Selected: {all_stocks[selected_symbol]['name']} (Sector: {all_stocks[selected_symbol]['sector']})")
+            st.info(f"Sector: {all_stocks[selected_symbol]['sector']}")
         elif not selected_symbol:
             st.warning("Please select a stock ticker symbol")
         
@@ -136,12 +153,11 @@ def manual_trade_entry():
                 st.error("Rate per share must be greater than zero.")
                 return
 
+            # Store only the ticker symbol for database operations
             trade_data = {
                 'memo_number': memo_number,
                 'purchase_date': formatted_date,
-                'stock_name': selected_symbol,  # Store the symbol
-                'stock_company': all_stocks[selected_symbol]['name'] if selected_symbol in all_stocks else "",  # Store the company name
-                'stock_sector': all_stocks[selected_symbol]['sector'] if selected_symbol in all_stocks else "",  # Store the sector
+                'stock_name': selected_symbol,  # Store only the ticker symbol
                 'number_of_stocks': number_of_stocks,
                 'rate_per_share': rate_per_share,
                 'commission_charges': commission_charges,
@@ -150,7 +166,10 @@ def manual_trade_entry():
                 'total_amount': total_amount
             }
             st.session_state.trades_list.append(trade_data)
-            st.success(f"✅ Added {selected_symbol} to memo: {memo_number}")
+            
+            # Display success with both ticker and company name for user clarity
+            company_name = all_stocks[selected_symbol]['name'] if selected_symbol in all_stocks else ""
+            st.success(f"✅ Added {selected_symbol} ({company_name}) to memo: {memo_number}")
 
     with button_col2:
         if st.button("✅ Submit Trade(s)", type="primary"):
@@ -165,9 +184,7 @@ def manual_trade_entry():
                 current_trade = {
                     'memo_number': memo_number,
                     'purchase_date': formatted_date,
-                    'stock_name': selected_symbol,  # Store the symbol
-                    'stock_company': all_stocks[selected_symbol]['name'] if selected_symbol in all_stocks else "",  # Store the company name
-                    'stock_sector': all_stocks[selected_symbol]['sector'] if selected_symbol in all_stocks else "",  # Store the sector
+                    'stock_name': selected_symbol,  # Store only the ticker symbol
                     'number_of_stocks': number_of_stocks,
                     'rate_per_share': rate_per_share,
                     'commission_charges': commission_charges,
