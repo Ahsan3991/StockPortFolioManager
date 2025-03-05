@@ -35,12 +35,22 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Force dark theme for all users
+st.markdown("""
+    <style>
+    :root {
+        color-scheme: dark;
+    }
+    html, body, [data-testid="stAppViewContainer"] {
+        background-color: #191a16;
+        color: white;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # Custom CSS for overall app styling
 st.markdown("""
     <style>
-     :root {
-        color-scheme: dark;
-    }
     /* Content container styling */
     [data-testid="stAppViewContainer"] {
         background-color: #191a16;  /* Background color, greenish-black */
