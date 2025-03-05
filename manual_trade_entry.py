@@ -88,8 +88,25 @@ def manual_trade_entry():
                                              help="Enter broker's commission")
         cdc_charges = st.number_input("CDC Charges (Rs.)", min_value=0.0, format="%.2f",
                                       help="Enter CDC charges")
-        sales_tax = st.number_input("Sales Tax (Rs.)", min_value=0.0, format="%.2f",
-                                    help="Enter the sales tax amount")
+        
+        # Add option to enter sales tax as percentage or absolute value
+        tax_input_type = st.radio(
+            "Sales Tax Input Type:",
+            options=["Amount (Rs.)", "Percentage (%)"],
+            horizontal=True,
+            help="Choose how you want to enter the sales tax"
+        )
+        
+        if tax_input_type == "Amount (Rs.)":
+            sales_tax = st.number_input("Sales Tax (Rs.)", min_value=0.0, format="%.2f",
+                                       help="Enter the sales tax amount directly")
+            sales_tax_percentage = None
+        else:
+            sales_tax_percentage = st.number_input("Sales Tax (%)", min_value=0.0, max_value=100.0, format="%.2f",
+                                                 help="Enter the sales tax as a percentage of the stock value")
+            # Calculate the sales tax amount based on the percentage and stock value
+            sales_tax = (sales_tax_percentage / 100) * stock_value
+            st.info(f"Calculated Sales Tax: Rs. {sales_tax:.2f} ({sales_tax_percentage}% of Rs. {stock_value:.2f})")
 
     stock_value = rate_per_share * number_of_stocks
     total_charges = commission_charges + cdc_charges + sales_tax
@@ -126,6 +143,7 @@ def manual_trade_entry():
                 'commission_charges': commission_charges,
                 'cdc_charges': cdc_charges,
                 'sales_tax': sales_tax,
+                'sales_tax_percentage': sales_tax_percentage,  # Store the percentage if used
                 'total_amount': total_amount
             }
             st.session_state.trades_list.append(trade_data)
@@ -152,6 +170,7 @@ def manual_trade_entry():
                     'commission_charges': commission_charges,
                     'cdc_charges': cdc_charges,
                     'sales_tax': sales_tax,
+                    'sales_tax_percentage': sales_tax_percentage,  # Store the percentage if used
                     'total_amount': total_amount
                 }
                 if current_trade not in st.session_state.trades_list:
@@ -167,6 +186,9 @@ def manual_trade_entry():
                 for trade in trades_to_insert:
                     # For now, we'll keep just saving the symbol to the database
                     # We can modify the database schema later to store additional info if needed
+                    # Add sales_tax_percentage to values if available (need to modify schema first)
+                    tax_percentage = trade.get('sales_tax_percentage')
+                    
                     cursor.execute("""
                         INSERT INTO trades (
                             date, memo_number, stock, quantity, rate, 
@@ -175,15 +197,16 @@ def manual_trade_entry():
                     """, (
                         trade['purchase_date'],
                         trade['memo_number'],
-                        clean_stock_name(trade['stock_name']),  # Still using clean_stock_name for consistency
+                        clean_stock_name(trade['stock_name']),  
                         trade['number_of_stocks'],
                         trade['rate_per_share'],
                         trade['commission_charges'],
                         trade['cdc_charges'],
-                        trade['sales_tax'],
+                        trade['sales_tax'],  
                         trade['total_amount'],
                         "Buy"
                     ))
+                    
 
                 cursor.execute("COMMIT")
                 st.success(f"✅ Trade(s) under Memo {memo_number} have been saved!")
