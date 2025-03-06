@@ -301,7 +301,7 @@ def login_page():
         .about-section {
             margin-top: 2rem;
             padding: 1.5rem;
-            background-color: rgba(30, 30, 30, 0.7);
+           # background-color: rgba(30, 30, 30, 0.7);
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
