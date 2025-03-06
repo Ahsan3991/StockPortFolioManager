@@ -274,6 +274,8 @@ def login_page():
             padding: 10px 20px;
             position: relative; 
             z-index: 1;
+            background-color: rgba(25, 26, 22, 0.8);
+            
         }}
 
         .st-emotion-cache-6sdwd6 {{
