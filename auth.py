@@ -2,6 +2,7 @@
 import streamlit as st
 import os
 import json
+import hashlib
 from db_utils import initialize_user_db
 
 def get_users_file_path():
@@ -18,6 +19,10 @@ def get_users_file_path():
         # Fallback to local directory for local development
         return "registered_users.json"
 
+def hash_password(password):
+    """Create a SHA-256 hash of the password"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
 def load_users():
     """Load registered users from file"""
     users_file = get_users_file_path()
@@ -32,74 +37,68 @@ def save_users(users):
     with open(users_file, 'w') as f:
         json.dump(users, f)
 
-def register_user(username):
-    """Register a new user"""
+def register_user(username, password):
+    """Register a new user with password"""
     users = load_users()
-    if username.lower() not in [u.lower() for u in users]:
-        users.append(username)
-        save_users(users)
-        # Initialize the database for this user
-        initialize_user_db(username)
-        return True
+    
+    # Convert username to lowercase for comparison
+    username_lower = username.lower()
+    
+    # Check if username already exists
+    if any(user.get('username', '').lower() == username_lower for user in users):
+        return False
+    
+    # Hash the password
+    hashed_password = hash_password(password)
+    
+    # Add new user with hashed password
+    user_data = {
+        'username': username,
+        'password': hashed_password
+    }
+    users.append(user_data)
+    save_users(users)
+    
+    # Initialize the database for this user
+    initialize_user_db(username)
+    return True
+
+def verify_credentials(username, password):
+    """Verify username and password"""
+    users = load_users()
+    
+    # Convert username to lowercase for case-insensitive comparison
+    username_lower = username.lower()
+    
+    # Find user
+    user = next((user for user in users if user.get('username', '').lower() == username_lower), None)
+    
+    if user:
+        # Hash the provided password and compare with stored hash
+        hashed_password = hash_password(password)
+        return hashed_password == user.get('password', '')
+    
     return False
 
 def user_exists(username):
     """Check if a user exists"""
     users = load_users()
-    return username.lower() in [u.lower() for u in users]
+    return any(user.get('username', '').lower() == username.lower() for user in users)
 
-def login_page():
-    """Display the login/registration page"""
-    st.title("🔒 WealthWise Login")
-    
-    # Login/register selection
-    auth_mode = st.radio("Choose an option:", ["Login", "Register"], horizontal=True)
-    
-    username = st.text_input("Username").strip()
-    submit_button = st.button("Submit")
-    
-    if submit_button and username:
-        if auth_mode == "Login":
-            if user_exists(username):
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.success(f"Welcome back, {username}!")
-                st.rerun()  # Reload the app to show the main interface
-            else:
-                st.error(f"User '{username}' does not exist. Please register first.")
-        else:  # Register
-            if register_user(username):
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.success(f"Account created for {username}!")
-                st.rerun()  # Reload the app to show the main interface
-            else:
-                st.error(f"Username '{username}' already exists. Please choose another.")
-    
-    elif submit_button:
-        st.warning("Please enter a username.")
-    
-    # Display explanatory message
-    st.markdown("""
-    ### About WealthWise
-    
-    
-    - **Login**: Access your existing portfolio
-    - **Register**: Create a new portfolio
-    """)
-    
-def logout():
-    """Log out the current user"""
-    if st.sidebar.button("Logout"):
-        st.session_state.logged_in = False
-        st.session_state.username = None
-        st.rerun()
 
-def show_user_info():
-    """Show current user information in the sidebar"""
-    if 'username' in st.session_state and st.session_state.username:
-        st.sidebar.markdown(f"**Logged in as:** {st.session_state.username}")
-        logout()
+def update_user_password(username, new_password):
+    """Update a user's password"""
+    users = load_users()
+    
+    # Find the user
+    for user in users:
+        if user.get('username', '').lower() == username.lower():
+            # Update password
+            user['password'] = hash_password(new_password)
+            save_users(users)
+            return True
+    
+    return False
 
 def delete_user(username):
     """
@@ -132,7 +131,82 @@ def delete_user(username):
     
     # Remove user from the registered users list
     users = load_users()
-    users = [u for u in users if u.lower() != username.lower()]
+    users = [user for user in users if user.get('username', '').lower() != username.lower()]
     save_users(users)
     
     return True
+
+# Function to migrate existing users to new format with passwords
+def migrate_users_to_password_system():
+    """Migrate existing users to the new password format"""
+    users_file = get_users_file_path()
+    
+    # Check if file exists first
+    if not os.path.exists(users_file):
+        # Create an empty users file
+        save_users([])
+        return
+    
+    try:
+        with open(users_file, 'r') as f:
+            data = f.read().strip()
+            # Check if the file is empty
+            if not data:
+                save_users([])
+                return
+                
+            # Try to parse existing data
+            existing_data = json.loads(data)
+            
+            # If it's already a list of dicts, check if migration is needed
+            if isinstance(existing_data, list):
+                if all(isinstance(user, dict) for user in existing_data):
+                    # Check if any user needs migration
+                    migration_needed = any(
+                        not isinstance(user, dict) or 'password' not in user 
+                        for user in existing_data
+                    )
+                    
+                    if not migration_needed:
+                        # No migration needed
+                        return
+                        
+                # Update format for users
+                updated_users = []
+                
+                for user in existing_data:
+                    # If it's already a dict with username and password
+                    if isinstance(user, dict) and 'username' in user and 'password' in user:
+                        updated_users.append(user)
+                    # If it's a dict with just username
+                    elif isinstance(user, dict) and 'username' in user:
+                        updated_users.append({
+                            'username': user['username'],
+                            'password': hash_password('default123')  # Temporary default password
+                        })
+                    # If it's just a username string
+                    else:
+                        username = user if isinstance(user, str) else str(user)
+                        updated_users.append({
+                            'username': username,
+                            'password': hash_password('default123')  # Temporary default password
+                        })
+                
+                save_users(updated_users)
+                return
+                
+            # If it's a list of strings (old format)
+            elif isinstance(existing_data, list) and all(isinstance(u, str) for u in existing_data):
+                updated_users = [
+                    {'username': username, 'password': hash_password('default123')}
+                    for username in existing_data
+                ]
+                save_users(updated_users)
+                return
+    except json.JSONDecodeError:
+        # File exists but isn't valid JSON, create a new one
+        save_users([])
+    except Exception as e:
+        print(f"Error during migration: {e}")
+        # In case of any error, create a new users file
+        save_users([])

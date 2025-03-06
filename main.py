@@ -10,7 +10,12 @@ from sell_trade import sell_trade
 from view_trades import view_trades
 from portfolio_summary import view_portfolio_summary
 from manual_metal_trade_entry import manual_metal_trade_entry
-from auth import load_users, delete_user, register_user
+
+# Import authentication functions
+from auth import (
+    load_users, delete_user, register_user, migrate_users_to_password_system,
+    verify_credentials, user_exists, update_user_password, hash_password
+)
 from db_utils import initialize_user_db, get_db_path
 
 # For .env file support (optional)
@@ -26,6 +31,8 @@ if 'ADMIN_PASSWORD' in os.environ:
     ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
 elif hasattr(st, 'secrets') and 'ADMIN_PASSWORD' in st.secrets:
     ADMIN_PASSWORD = st.secrets['ADMIN_PASSWORD']
+else:
+    ADMIN_PASSWORD = "admin123"  # Default fallback for local testing
 
 # Page Configuration with theme explicitly set to dark
 st.set_page_config(
@@ -224,17 +231,23 @@ if 'admin_view' not in st.session_state:
 if 'selected_option' not in st.session_state:
     st.session_state.selected_option = "Portfolio Summary"
 
+if 'reset_password_mode' not in st.session_state:
+    st.session_state.reset_password_mode = False
+
+# Migrate existing users to the password-based system
+migrate_users_to_password_system()
+
 # Create admin user if not exists
 users = load_users()
-if 'admin' not in [u.lower() for u in users]:
-    register_user('admin')
+if not any(user.get('username', '').lower() == 'admin' for user in users):
+    register_user('admin', ADMIN_PASSWORD)
     st.info("Admin user created on first run")
 
+# Login page function
 def login_page():
     """Display the enhanced login/registration page with centered elements and no rectangular box"""
     page_bg_img = f"""
     <style>
-
     .st-emotion-cache-uf99v8 {{
         background-image: url("https://raw.githubusercontent.com/Ahsan3991/StockPortFolioManager/refs/heads/testing/assets/wealthwise-logo-zip-file/background-image.png");
         background-size: cover;
@@ -252,7 +265,6 @@ def login_page():
         background: rgba(0, 0, 0, 0.4);  /* Dark transparent overlay */
         z-index: -1;  /* Places it behind content */
     }}
- 
     </style>
     """
 
@@ -260,7 +272,6 @@ def login_page():
     st.markdown(
         f"""
         <style>
-        
         /* Remove unwanted elements and boxes */
         .element-container:has(.stTextArea) {{
             display: none !important;
@@ -427,22 +438,28 @@ def login_page():
         # Using label_visibility="collapsed" to hide the "Choose an option" text
         auth_mode = st.radio("", ["Login", "Register"], horizontal=True, label_visibility="collapsed")
         st.markdown('</div>', unsafe_allow_html=True)
+        
         # Username field
         st.markdown('<div class="form-control">', unsafe_allow_html=True)
         username = st.text_input("Username").strip()
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # Admin password field (conditional)
-        password = ""
-        if username.lower() == "admin":
+        # Password field
+        st.markdown('<div class="form-control">', unsafe_allow_html=True)
+        password = st.text_input("Password", type="password")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Confirm password field (only for registration)
+        if auth_mode == "Register":
             st.markdown('<div class="form-control">', unsafe_allow_html=True)
-            password = st.text_input("Admin Password", type="password")
+            confirm_password = st.text_input("Confirm Password", type="password")
             st.markdown('</div>', unsafe_allow_html=True)
         
         # Submit button
         st.markdown('<div class="submit-button">', unsafe_allow_html=True)
         submit_button = st.button("**Submit**")
         st.markdown('</div>', unsafe_allow_html=True)
+        
         col1, col2, col3 = st.columns([1, 5, 1])
         with col1: st.write(" ")
         with col2:
@@ -458,13 +475,20 @@ def login_page():
     with col3: 
         st.write(" ")
 
-    
     # Process form submission
-    if submit_button and username:
+    if submit_button:
+        if not username.strip():
+            st.error("Username is required.")
+            return
+            
+        if not password:
+            st.error("Password is required.")
+            return
+            
         if auth_mode == "Login":
+            # Special admin login
             if username.lower() == "admin":
-                # Special handling for admin login
-                if 'ADMIN_PASSWORD' in globals() and password == ADMIN_PASSWORD:
+                if password == ADMIN_PASSWORD:
                     st.session_state.logged_in = True
                     st.session_state.username = "admin"
                     st.session_state.is_admin = True
@@ -472,11 +496,10 @@ def login_page():
                     time.sleep(1)
                     st.rerun()
                 else:
-                    # Show error message for incorrect admin password
                     st.error("❌ Incorrect admin password.")
                     time.sleep(1)
-                    st.rerun()
-            elif user_exists(username):
+            # Regular user login
+            elif verify_credentials(username, password):
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 st.session_state.is_admin = False
@@ -484,11 +507,14 @@ def login_page():
                 time.sleep(1)
                 st.rerun()
             else:
-                st.error(f"User '{username}' does not exist. Please register first.")
+                st.error("Invalid username or password. Please try again.")
         else:  # Register
+            # Validate registration
             if username.lower() == "admin":
                 st.error("Cannot register with reserved username 'admin'.")
-            elif register_user(username):
+            elif auth_mode == "Register" and password != confirm_password:
+                st.error("Passwords do not match. Please try again.")
+            elif register_user(username, password):
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 st.session_state.is_admin = False
@@ -498,20 +524,43 @@ def login_page():
             else:
                 st.error(f"Username '{username}' already exists. Please choose another.")
     
-    elif submit_button:
-        st.warning("Please enter a username.")
-    
     # Close the centered column
     st.markdown('</div>', unsafe_allow_html=True)
 
+def change_password_page():
+    """Display the change password form"""
+    st.subheader("Change Your Password")
+    
+    current_password = st.text_input("Current Password", type="password")
+    new_password = st.text_input("New Password", type="password")
+    confirm_password = st.text_input("Confirm New Password", type="password")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("Update Password", type="primary"):
+            # Validate current password
+            if not verify_credentials(st.session_state.username, current_password):
+                st.error("Current password is incorrect.")
+            elif not new_password:
+                st.error("New password cannot be empty.")
+            elif new_password != confirm_password:
+                st.error("New passwords do not match.")
+            else:
+                # Update password
+                if update_user_password(st.session_state.username, new_password):
+                    st.success("Password updated successfully!")
+                    st.session_state.reset_password_mode = False
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error("Failed to update password. Please try again.")
+    
+    with col2:
+        if st.button("Cancel"):
+            st.session_state.reset_password_mode = False
+            st.rerun()
 
-# Function to check if user exists
-def user_exists(username):
-    """Check if a user exists"""
-    users = load_users()
-    return username.lower() in [u.lower() for u in users]
-
-# Function to show user info and logout button
 def show_user_info():
     """Show current user information in the sidebar"""
     if 'username' in st.session_state and st.session_state.username:
@@ -520,10 +569,16 @@ def show_user_info():
         else:
             st.sidebar.markdown(f"**Logged in as:** {st.session_state.username}")
         
+        # Add a password change option
+        if not st.session_state.is_admin:
+            if st.sidebar.button("Change Password"):
+                st.session_state.reset_password_mode = True
+            
         if st.sidebar.button("Logout"):
             st.session_state.logged_in = False
             st.session_state.username = None
             st.session_state.is_admin = False
+            st.session_state.reset_password_mode = False
             st.rerun()
 
 # Function to show user management interface
@@ -540,16 +595,20 @@ def show_user_management():
         st.write("### Registered Users")
         
         # Create a dataframe for better visualization
-        import pandas as pd
-        user_df = pd.DataFrame({"Username": users})
-        st.dataframe(user_df)
+        usernames = [user.get('username', user) for user in users]
+        user_df = pd.DataFrame({"Username": usernames})
+        st.dataframe(user_df, hide_index=True)
         
         st.divider()
         
         # Delete user section
         st.subheader("Delete User")
         
-        username = st.selectbox("Select user to delete:", [u for u in users if u.lower() != 'admin'])
+        # Get usernames excluding admin
+        non_admin_users = [u.get('username', u) for u in users 
+                          if u.get('username', u).lower() != 'admin']
+        
+        username = st.selectbox("Select user to delete:", non_admin_users)
         
         # Display database path for the selected user
         if username:
@@ -607,101 +666,105 @@ if not st.session_state.logged_in:
     # Show login page if not logged in
     login_page()
 else:
-    # First define the sidebar to collect user choice
-    with st.sidebar:
-        # Show user info and logout button
-        show_user_info()
-        
-        st.subheader("Navigation")
-        st.markdown('<p style="font-size: 1.5rem; font-weight: 500; color: #1E4020; margin-bottom: 0.2rem;">Choose Your Action</p>', unsafe_allow_html=True)
-        
-        # Different navigation options for admin vs regular users
-        if st.session_state.is_admin:
-            option = st.selectbox(
-                "Choose Your Action",
-                [
-                    "User Management",
-                    "App Dashboard"
-                ],
-                label_visibility="collapsed"
-            )
-            
-            # Update admin view based on selection
-            if option != st.session_state.admin_view:
-                st.session_state.admin_view = option
-                st.rerun()
-        else:
-            # Store the selection in session state to preserve it between reruns
-            selected_option = st.selectbox(
-                "Choose Your Action",
-                [
-                    "Portfolio Summary",
-                    "Manually Enter Trade",
-                    "Manually Enter Metal Trade",
-                    "Manually Enter Dividend",
-                    "Sell Stock",
-                    "View Trades"
-                ],
-                label_visibility="collapsed"
-            )
-            # Store selection in session state
-            st.session_state.selected_option = selected_option
-    
-    # Now define the main content area OUTSIDE the sidebar
-    if st.session_state.is_admin:
-        # Admin interface
-        st.markdown('<div class="admin-header">🔒 ADMIN CONTROL PANEL</div>', unsafe_allow_html=True)
-        
-        # Admin tabs without using .select()
-        admin_option = st.radio("Admin View", ["User Management", "App Dashboard"], horizontal=True)
-        st.session_state.admin_view = admin_option
-        
-        # Display the selected admin view
-        if st.session_state.admin_view == "User Management":
-            show_user_management()
-        else:
-            show_app_dashboard()                
+    # Check if user is in password reset mode
+    if not st.session_state.is_admin and st.session_state.reset_password_mode:
+        change_password_page()
     else:
-        # Regular user interface
-        # Create a centered container for the logo
-        col1, col2, col3 = st.columns([1, 2, 1])
+        # First define the sidebar to collect user choice
+        with st.sidebar:
+            # Show user info and logout button
+            show_user_info()
+            
+            st.subheader("Navigation")
+            st.markdown('<p style="font-size: 1.5rem; font-weight: 500; color: #1E4020; margin-bottom: 0.2rem;">Choose Your Action</p>', unsafe_allow_html=True)
+            
+            # Different navigation options for admin vs regular users
+            if st.session_state.is_admin:
+                option = st.selectbox(
+                    "Choose Your Action",
+                    [
+                        "User Management",
+                        "App Dashboard"
+                    ],
+                    label_visibility="collapsed"
+                )
+                
+                # Update admin view based on selection
+                if option != st.session_state.admin_view:
+                    st.session_state.admin_view = option
+                    st.rerun()
+            else:
+                # Store the selection in session state to preserve it between reruns
+                selected_option = st.selectbox(
+                    "Choose Your Action",
+                    [
+                        "Portfolio Summary",
+                        "Manually Enter Trade",
+                        "Manually Enter Metal Trade",
+                        "Manually Enter Dividend",
+                        "Sell Stock",
+                        "View Trades"
+                    ],
+                    label_visibility="collapsed"
+                )
+                # Store selection in session state
+                st.session_state.selected_option = selected_option
         
-        with col2:
-            # Display logo or text-based title with fallback
-            try:
-                # Method 1: Using st.image with width parameter - much larger now
-                logo_path = "./assets/wealthwise-logo-zip-file/svg/logo-no-background.svg"
-                if os.path.exists(logo_path):
-                    st.image(logo_path, width=600)
-                else:
-                    # If main logo not found, try alternative logo
-                    alt_logo_path = "./assets/wealthwise-logo-zip-file/png/logo-no-background.png"
-                    if os.path.exists(alt_logo_path):
-                        st.image(alt_logo_path, width=600)
+        # Now define the main content area OUTSIDE the sidebar
+        if st.session_state.is_admin:
+            # Admin interface
+            st.markdown('<div class="admin-header">🔒 ADMIN CONTROL PANEL</div>', unsafe_allow_html=True)
+            
+            # Admin tabs without using .select()
+            admin_option = st.radio("Admin View", ["User Management", "App Dashboard"], horizontal=True)
+            st.session_state.admin_view = admin_option
+            
+            # Display the selected admin view
+            if st.session_state.admin_view == "User Management":
+                show_user_management()
+            else:
+                show_app_dashboard()                
+        else:
+            # Regular user interface
+            # Create a centered container for the logo
+            col1, col2, col3 = st.columns([1, 2, 1])
+            
+            with col2:
+                # Display logo or text-based title with fallback
+                try:
+                    # Method 1: Using st.image with width parameter - much larger now
+                    logo_path = "./assets/wealthwise-logo-zip-file/svg/logo-no-background.svg"
+                    if os.path.exists(logo_path):
+                        st.image(logo_path, width=600)
                     else:
-                        # Fallback to text-based title
-                        raise FileNotFoundError("Logo files not found")
-            except Exception as e:
-                # Fallback to text-based title if image doesn't work
-                st.markdown('<div class="app-title"><h1>WealthWise</h1></div>', unsafe_allow_html=True)
-                st.markdown('<div class="app-subtitle"><h2>Portfolio Manager</h2></div>', unsafe_allow_html=True)
-        
-        # Welcome message with current portfolio name
-        st.markdown('<div class="welcome-section"></div>', unsafe_allow_html=True)
-        st.markdown(f"## Welcome to your personal portfolio tracker, {st.session_state.username}!")
-       # st.caption(f"Your portfolio data is stored in: {get_db_path()}")
-        
-        # IMPORTANT: Function calls must be OUTSIDE the sidebar context
-        # This is what fixes the layout issue
-        if st.session_state.selected_option == "Manually Enter Trade":
-            manual_trade_entry()
-        elif st.session_state.selected_option == "Manually Enter Metal Trade":
-            manual_metal_trade_entry()
-        elif st.session_state.selected_option == "Manually Enter Dividend":
-            manual_dividend_entry()
-        elif st.session_state.selected_option == "Sell Stock":
-            sell_trade()
-        elif st.session_state.selected_option == "View Trades":
-            view_trades()
-        elif st.session_state.selected_option == "Portfolio Summary":
-            view_portfolio_summary()
+                        # If main logo not found, try alternative logo
+                        alt_logo_path = "./assets/wealthwise-logo-zip-file/png/logo-no-background.png"
+                        if os.path.exists(alt_logo_path):
+                            st.image(alt_logo_path, width=600)
+                        else:
+                            # Fallback to text-based title
+                            raise FileNotFoundError("Logo files not found")
+                except Exception as e:
+                    # Fallback to text-based title if image doesn't work
+                    st.markdown('<div class="app-title"><h1>WealthWise</h1></div>', unsafe_allow_html=True)
+                    st.markdown('<div class="app-subtitle"><h2>Portfolio Manager</h2></div>', unsafe_allow_html=True)
+            
+            # Welcome message with current portfolio name
+            st.markdown('<div class="welcome-section"></div>', unsafe_allow_html=True)
+            st.markdown(f"## Welcome to your personal portfolio tracker, {st.session_state.username}!")
+           # st.caption(f"Your portfolio data is stored in: {get_db_path()}")
+            
+            # IMPORTANT: Function calls must be OUTSIDE the sidebar context
+            # This is what fixes the layout issue
+            if st.session_state.selected_option == "Manually Enter Trade":
+                manual_trade_entry()
+            elif st.session_state.selected_option == "Manually Enter Metal Trade":
+                manual_metal_trade_entry()
+            elif st.session_state.selected_option == "Manually Enter Dividend":
+                manual_dividend_entry()
+            elif st.session_state.selected_option == "Sell Stock":
+                sell_trade()
+            elif st.session_state.selected_option == "View Trades":
+                view_trades()
+            elif st.session_state.selected_option == "Portfolio Summary":
+                view_portfolio_summary()
