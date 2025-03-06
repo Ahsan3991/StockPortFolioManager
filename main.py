@@ -278,7 +278,7 @@ def login_page():
             
         }}
         /* Increasing opaqueness in the center for better viewing */
-        .st-emotion-cache-1je36yt {{
+        .st-emotion-cache-1wmy9hl {{
             position: relative; 
             z-index: 1;
             background-color: rgba(25, 26, 22, 0.9);
