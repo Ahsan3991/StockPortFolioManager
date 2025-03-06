@@ -375,8 +375,10 @@ def login_page():
     # Display logo
     # Create a centered container for the logo
     col1, col2, col3 = st.columns([1, 3, 1])
+  
     with col1: 
         st.write(" ")
+    
     with col2:
         st.markdown('<div class="logo">', unsafe_allow_html=True)
         if logo_path:
@@ -390,30 +392,34 @@ def login_page():
         # Using label_visibility="collapsed" to hide the "Choose an option" text
         auth_mode = st.radio("", ["Login", "Register"], horizontal=True, label_visibility="collapsed")
         st.markdown('</div>', unsafe_allow_html=True)
+        # Username field
+        st.markdown('<div class="form-control">', unsafe_allow_html=True)
+        username = st.text_input("Username").strip()
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Admin password field (conditional)
+        password = ""
+        if username.lower() == "admin":
+            st.markdown('<div class="form-control">', unsafe_allow_html=True)
+            password = st.text_input("Admin Password", type="password")
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Submit button
+        st.markdown('<div class="submit-button">', unsafe_allow_html=True)
+        submit_button = st.button("Submit")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+         # About Section
+        st.markdown('<div class="about-section">', unsafe_allow_html=True)
+        st.markdown("<h2>About WealthWise</h2>", unsafe_allow_html=True)
+        st.write("A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments.")
+        st.write("This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.")
+        st.write("**Login:** Access your existing portfolio      |     **Register:** Create a new portfolio ")
+        st.markdown('</div>', unsafe_allow_html=True)
+   
     with col3: 
         st.write(" ")
 
-    # Page header
-   # st.markdown('<h1 class="page-header">WealthWise Login</h1>', unsafe_allow_html=True)
-    
-    
-    
-    # Username field
-    st.markdown('<div class="form-control">', unsafe_allow_html=True)
-    username = st.text_input("Username").strip()
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Admin password field (conditional)
-    password = ""
-    if username.lower() == "admin":
-        st.markdown('<div class="form-control">', unsafe_allow_html=True)
-        password = st.text_input("Admin Password", type="password")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Submit button
-    st.markdown('<div class="submit-button">', unsafe_allow_html=True)
-    submit_button = st.button("Submit")
-    st.markdown('</div>', unsafe_allow_html=True)
     
     # Process form submission
     if submit_button and username:
@@ -456,22 +462,6 @@ def login_page():
     
     elif submit_button:
         st.warning("Please enter a username.")
-    
-    # About Section
-    st.markdown('<div class="about-section">', unsafe_allow_html=True)
-    st.markdown("<h2>About WealthWise</h2>", unsafe_allow_html=True)
-    st.write("A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments.")
-    st.write("This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.")
-    
-    col1, col2, col3 = st.columns(3)
-    with col1: 
-        st.write(" ")
-    with col2:
-        st.write("**Login:** Access your existing portfolio      |     **Register:** Create a new portfolio ")
-    with col3: 
-        st.write(" ")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
     
     # Close the centered column
     st.markdown('</div>', unsafe_allow_html=True)
