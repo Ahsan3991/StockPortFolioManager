@@ -452,9 +452,13 @@ def login_page():
     st.write("A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments.")
     st.write("This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.")
     
-    col1, col2, col3 = st.columns(1,2,1)
+    col1, col2, col3 = st.columns(3)
+    with col1: 
+        st.write(" ")
     with col2:
         st.write("**Login:** Access your existing portfolio      |     **Register:** Create a new portfolio ")
+    with col3: 
+        st.write(" ")
     
     st.markdown('</div>', unsafe_allow_html=True)
     
