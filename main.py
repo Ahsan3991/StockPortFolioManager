@@ -380,7 +380,7 @@ def login_page():
     with col2:
         st.markdown('<div class="logo">', unsafe_allow_html=True)
         if logo_path:
-            st.image(logo_path, width=900)
+            st.image(logo_path, width=600)
         st.markdown('</div>', unsafe_allow_html=True)
     with col3: 
         st.write(" ")
