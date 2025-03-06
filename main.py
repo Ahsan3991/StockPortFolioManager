@@ -342,11 +342,6 @@ def login_page():
             display: none !important;
         }
         
-        /* Remove the rectangular box above About WealthWise */
-        div.css-1kyxreq {
-            display: none !important;
-        }
-        
         .stTextInput {
             max-width: 400px !important;
             margin: 0 auto !important;
