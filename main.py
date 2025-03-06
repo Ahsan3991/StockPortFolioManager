@@ -263,10 +263,10 @@ def login_page():
         /* Page header */
         .page-header {
             text-align: center;
-            margin: 1.5rem 0;
-            color: white;
-            font-size: 2.5rem;
-            font-weight: 600;
+            margin: 1rem 0;
+            color: #cfcfcc;
+            font-size: 2rem;
+            font-weight: 450;
         }
         
         /* Form elements */
@@ -298,16 +298,17 @@ def login_page():
         
         /* About section */
         .about-section {
-            margin-top: 3rem;
+            margin-top: 2rem;
             padding: 1.5rem;
             background-color: rgba(30, 30, 30, 0.7);
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
         }
         
         .about-section h2 {
             text-align: center;
-            color: #8a6d17;
+            color: #cfcfcc;
             margin-bottom: 1rem;
         }
         
