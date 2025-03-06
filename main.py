@@ -287,6 +287,8 @@ def login_page():
         .logo {{
             text-align: center;
             margin: 2rem auto 1rem auto;
+            max-width: 1000px;
+            
         }}
         
         /* Page header */
