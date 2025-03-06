@@ -384,17 +384,19 @@ def login_page():
         st.markdown('</div>', unsafe_allow_html=True)
         # Page header
         st.markdown('<h1 class="page-header">WealthWise Login</h1>', unsafe_allow_html=True)
+
+        # Login/Register radio buttons - centered
+        st.markdown('<div class="radio-wrapper">', unsafe_allow_html=True)
+        # Using label_visibility="collapsed" to hide the "Choose an option" text
+        auth_mode = st.radio("", ["Login", "Register"], horizontal=True, label_visibility="collapsed")
+        st.markdown('</div>', unsafe_allow_html=True)
     with col3: 
         st.write(" ")
 
     # Page header
    # st.markdown('<h1 class="page-header">WealthWise Login</h1>', unsafe_allow_html=True)
     
-    # Login/Register radio buttons - centered
-    st.markdown('<div class="radio-wrapper">', unsafe_allow_html=True)
-    # Using label_visibility="collapsed" to hide the "Choose an option" text
-    auth_mode = st.radio("", ["Login", "Register"], horizontal=True, label_visibility="collapsed")
-    st.markdown('</div>', unsafe_allow_html=True)
+    
     
     # Username field
     st.markdown('<div class="form-control">', unsafe_allow_html=True)
