@@ -239,151 +239,142 @@ def get_base64_encoded_image(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode('utf-8')
 
-# Custom login page with admin password support
 def login_page():
-    # Get base64 encoded background image
+    """Display the enhanced login/registration page with centered elements and no rectangular box"""
+    
+    # Test the background image by displaying it directly
+    st.write("Testing background image visibility:")
     bg_image_path = "./assets/wealthwise-logo-zip-file/background-image.png"
-    bg_image_base64 = get_base64_encoded_image(bg_image_path)
-   
-    # Background image CSS - use the base64 string if available, otherwise use a fallback color
-    bg_image_css = f"""
-    background-image: url('data:image/png;base64,{bg_image_base64}');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    """ if bg_image_base64 else "background-color: #191a16;"
-
+    
+    if os.path.exists(bg_image_path):
+        st.image(bg_image_path, caption="Background Image Test", width=300)
+        st.write(f"✅ Image found at: {bg_image_path}")
+    else:
+        st.error(f"❌ Image not found at: {bg_image_path}")
+        
+        # List files in the directory to help debug
+        if os.path.exists("./assets/wealthwise-logo-zip-file/"):
+            files = os.listdir("./assets/wealthwise-logo-zip-file/")
+            st.write("Files in directory:")
+            st.write(files)
+        else:
+            st.error("Directory not found: ./assets/wealthwise-logo-zip-file/")
+    
     # Custom CSS for the login page with better centering for radio buttons
     st.markdown("""
     <style>
-    /* Background image */
-    [data-testid="stAppViewContainer"] {{
-        {bg_image_css}
-        /* Fallback color */
-        background-color: #191a16;
-    }}
-    
-    /* Add semi-transparent overlay to ensure text readability */
-    [data-testid="stAppViewContainer"]::before {{
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(25, 26, 22, 0.7);
-        z-index: -1;
-    }}
-                
-    /* Remove unwanted elements and boxes */
-    .element-container:has(.stTextArea) {
-        display: none !important;
-    }
-    
-    /* Center alignment */
-    .center-column {
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 10px 20px;
-    }
-    
-    /* Logo */
-    .logo {
-        text-align: center;
-        margin: 2rem auto 1rem auto;
-    }
-    
-    /* Page header */
-    .page-header {
-        text-align: center;
-        margin: 1rem 0;
-        color: #cfcfcc;
-        font-size: 2rem;
-        font-weight: 450;
-    }
-    
-    /* Form elements */
-    .form-control {
-        max-width: 300px;
-        margin: 1rem auto;
-    }
-    
-    /* Center the radio buttons */
-    .radio-wrapper {
-        display: flex;
-        justify-content: center !important;
-        text-align: center !important;
-        margin: 1rem auto;
-    }
-    
-    /* Style the radio buttons container */
-    .stRadio > div {
-        display: flex;
-        justify-content: center !important;
-    }
-    
-    /* Submit button */
-    .submit-button {
-        max-width: 150px;
-        margin: 1.5rem auto;
-        text-align: center;
-        font-weight: bold;
-    }
-    
-    /* About section */
-    .about-section {
-        margin-top: 1rem;
-        padding: 1rem;
-        # background-color: rgba(30, 30, 30, 0.7);
-        border-radius: 5px;
-        border: 1px solid rgba(140, 122, 49, 0.2);
-        text-align: center;
-    }
-    
-    .about-section h2 {
-        text-align: center;
-        color: #cfcfcc;
-        margin-bottom: 1rem;
-    }
-    
-    /* Hide sidebar */
-    [data-testid="stSidebar"] {
-        visibility: hidden;
-        width: 0 !important;
-    }
-    
-    /* Other elements */
-    .stButton button {
-        background-color: #8a6d17 !important;
-        color: white !important;
-        width: 100%;
-    }
-    
-    /* Override Streamlit defaults */
-    div[data-testid="stVerticalBlock"] > div:empty {
-        display: none !important;
-        height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-    
-    /* Remove the 'Choose an option' text */
-    [data-testid="stRadio"] > label {
-        display: none !important;
-    }
-    
-    .stTextInput {
-        max-width: 400px !important;
-        margin: 0 auto !important;
-    }
-    
-    .stButton {
-        max-width: 400px !important;
-        margin: 0 auto !important;
-    }
-</style>
-""", unsafe_allow_html=True)
+        /* Background color fallback */
+        [data-testid="stAppViewContainer"] {
+            background-color: #191a16;
+        }
+        
+        /* Remove unwanted elements and boxes */
+        .element-container:has(.stTextArea) {
+            display: none !important;
+        }
+        
+        /* Center alignment */
+        .center-column {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 10px 20px;
+        }
+        
+        /* Logo */
+        .logo {
+            text-align: center;
+            margin: 2rem auto 1rem auto;
+        }
+        
+        /* Page header */
+        .page-header {
+            text-align: center;
+            margin: 1rem 0;
+            color: #cfcfcc;
+            font-size: 2rem;
+            font-weight: 450;
+        }
+        
+        /* Form elements */
+        .form-control {
+            max-width: 300px;
+            margin: 1rem auto;
+        }
+        
+        /* Center the radio buttons */
+        .radio-wrapper {
+            display: flex;
+            justify-content: center !important;
+            text-align: center !important;
+            margin: 1rem auto;
+        }
+        
+        /* Style the radio buttons container */
+        .stRadio > div {
+            display: flex;
+            justify-content: center !important;
+        }
+        
+        /* Submit button */
+        .submit-button {
+            max-width: 150px;
+            margin: 1.5rem auto;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        /* About section */
+        .about-section {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 5px;
+            border: 1px solid rgba(140, 122, 49, 0.2);
+            text-align: center;
+        }
+        
+        .about-section h2 {
+            text-align: center;
+            color: #cfcfcc;
+            margin-bottom: 1rem;
+        }
+        
+        /* Hide sidebar */
+        [data-testid="stSidebar"] {
+            visibility: hidden;
+            width: 0 !important;
+        }
+        
+        /* Other elements */
+        .stButton button {
+            background-color: #8a6d17 !important;
+            color: white !important;
+            width: 100%;
+        }
+        
+        /* Override Streamlit defaults */
+        div[data-testid="stVerticalBlock"] > div:empty {
+            display: none !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* Remove the 'Choose an option' text */
+        [data-testid="stRadio"] > label {
+            display: none !important;
+        }
+        
+        .stTextInput {
+            max-width: 400px !important;
+            margin: 0 auto !important;
+        }
+        
+        .stButton {
+            max-width: 400px !important;
+            margin: 0 auto !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
     
     # Start the centered column layout
     st.markdown('<div class="center-column">', unsafe_allow_html=True)
@@ -403,7 +394,8 @@ def login_page():
             logo_path = path
             break
     
-    # Create a centered container
+    # Display logo
+    # Create a centered container for the logo
     col1, col2, col3 = st.columns([1, 2, 1])
   
     with col1: 
@@ -444,7 +436,7 @@ def login_page():
             # About Section
             st.markdown('<div class="about-section">', unsafe_allow_html=True)
             st.markdown("<h2>About WealthWise</h2>", unsafe_allow_html=True)
-            st.write("A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of your precious metal investments.")
+            st.write("A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments.")
             st.write("This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.")
            
             st.markdown('</div>', unsafe_allow_html=True)
@@ -498,6 +490,7 @@ def login_page():
     
     # Close the centered column
     st.markdown('</div>', unsafe_allow_html=True)
+    
 
 # Function to check if user exists
 def user_exists(username):
