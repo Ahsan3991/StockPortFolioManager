@@ -242,7 +242,7 @@ def login_page():
         background-position: center;
         position: relative;
     }}
-    
+
     .st-emotion-cache-uf99v8::before {{
         content: "";
         position: absolute;
@@ -442,7 +442,7 @@ def login_page():
         st.markdown('<div class="submit-button">', unsafe_allow_html=True)
         submit_button = st.button("**Submit**")
         st.markdown('</div>', unsafe_allow_html=True)
-        col1, col2, col3 = st.columns([1, 3, 1])
+        col1, col2, col3 = st.columns([1, 4, 1])
         with col1: st.write(" ")
         with col2:
             # About Section
