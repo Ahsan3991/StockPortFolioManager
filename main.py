@@ -408,7 +408,6 @@ def login_page():
         st.markdown('<div class="submit-button">', unsafe_allow_html=True)
         submit_button = st.button("Submit")
         st.markdown('</div>', unsafe_allow_html=True)
-        st.write("**Login:** Access your existing portfolio      |     **Register:** Create a new portfolio ")
         col1, col2, col3 = st.columns([1, 3, 1])
         with col1: st.write(" ")
         with col2:
