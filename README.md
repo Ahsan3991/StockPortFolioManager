@@ -120,5 +120,7 @@ For support or queries:
 - Create an [issue](https://github.com/Ahsan3991/StockPortFolioManager/issues)
 - Contact the maintainer
 
+## Actual Screenshots
+(to be added)
 ---
 Made with ❤️ for investors and traders
