@@ -479,7 +479,7 @@ else:
         # Welcome message with current portfolio name
         st.markdown('<div class="welcome-section"></div>', unsafe_allow_html=True)
         st.markdown(f"## Welcome to your personal portfolio tracker, {st.session_state.username}!")
-        st.caption(f"Your portfolio data is stored in: {get_db_path()}")
+       # st.caption(f"Your portfolio data is stored in: {get_db_path()}")
         
         # IMPORTANT: Function calls must be OUTSIDE the sidebar context
         # This is what fixes the layout issue
