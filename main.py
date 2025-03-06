@@ -411,7 +411,7 @@ def login_page():
             # About Section
             st.markdown('<div class="about-section">', unsafe_allow_html=True)
             st.markdown("<h2>About WealthWise</h2>", unsafe_allow_html=True)
-            st.write("A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments.")
+            st.write("A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of your precious metal investments.")
             st.write("This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.")
            
             st.markdown('</div>', unsafe_allow_html=True)
