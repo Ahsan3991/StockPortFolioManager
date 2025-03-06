@@ -382,7 +382,7 @@ def login_page():
     with col2:
         st.markdown('<div class="logo">', unsafe_allow_html=True)
         if logo_path:
-            st.image(logo_path, width=900)
+            st.image(logo_path, width=850)
         st.markdown('</div>', unsafe_allow_html=True)
         # Page header
         st.markdown('<h1 class="page-header">WealthWise Login</h1>', unsafe_allow_html=True)
