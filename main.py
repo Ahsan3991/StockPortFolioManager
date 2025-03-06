@@ -274,14 +274,13 @@ def login_page():
             padding: 10px 20px;
             position: relative; 
             z-index: 1;
-            background-color: rgba(25, 26, 22, 0.8);
             
         }}
         /* Increasing opaqueness in the center for better viewing */
         .st-emotion-cache-1wmy9hl {{
             position: relative; 
             z-index: 1;
-            background-color: rgba(25, 26, 22, 0.9);
+            background-color: rgba(25, 26, 22, 0.8);
         }}
         
         /* Logo */
