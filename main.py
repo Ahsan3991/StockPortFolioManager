@@ -249,7 +249,7 @@ def login_page():
         
         /* Center alignment */
         .center-column {
-            max-width: 650px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 10px 20px;
         }
@@ -294,6 +294,7 @@ def login_page():
             max-width: 150px;
             margin: 1.5rem auto;
             text-align: center;
+            font-weight: bold;
         }
         
         /* About section */
@@ -331,11 +332,6 @@ def login_page():
             height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
-        }
-        
-        /* Make form labels white */
-        label {
-            color: white !important;
         }
         
         /* Remove the 'Choose an option' text */
@@ -386,7 +382,7 @@ def login_page():
             st.image(logo_path, width=1000, use_column_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
         # Page header
-        st.markdown('<h1 class="page-header">Please Login or Register</h1>', unsafe_allow_html=True)
+        st.markdown('<h2 class="page-header">Please Login or Register</h2>', unsafe_allow_html=True)
 
         # Login/Register radio buttons - centered
         st.markdown('<div class="radio-wrapper">', unsafe_allow_html=True)
