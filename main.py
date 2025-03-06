@@ -288,8 +288,7 @@ def login_page():
     # Display explanatory message
     st.markdown("""
     ### About WealthWise
-    This application allows you to track your investment portfolio. Each user 
-    gets their own private database, so your data won't be mixed with others.
+    This application allows you to track your investment portfolio. 
     
     - **Login**: Access your existing portfolio
     - **Register**: Create a new portfolio
