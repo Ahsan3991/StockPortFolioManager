@@ -374,13 +374,13 @@ def login_page():
     
     # Display logo
     # Create a centered container for the logo
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns([1, 3, 1])
     with col1: 
         st.write(" ")
     with col2:
         st.markdown('<div class="logo">', unsafe_allow_html=True)
         if logo_path:
-            st.image(logo_path, width=600)
+            st.image(logo_path, width=900)
         st.markdown('</div>', unsafe_allow_html=True)
     with col3: 
         st.write(" ")
