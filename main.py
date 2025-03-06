@@ -232,9 +232,9 @@ if 'admin' not in [u.lower() for u in users]:
 
 # Custom login page with admin password support
 def login_page():
-    """Display the enhanced login/registration page with styled background"""
+    """Display the enhanced login/registration page with strict center alignment"""
     
-    # Custom CSS to fix the layout issues and remove unwanted boxes
+    # Custom CSS for the login page with a single centered column approach
     st.markdown("""
     <style>
         /* Background color fallback */
@@ -242,97 +242,85 @@ def login_page():
             background-color: #191a16;
         }
         
-        /* Completely remove all empty divs and blocks */
-        [data-testid="stVerticalBlock"] > div:empty {
-            display: none !important;
-            height: 0 !important;
-            min-height: 0 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        
-        /* Remove unwanted rectangular boxes */
+        /* Remove unwanted elements */
         .element-container:has(.stTextArea) {
             display: none !important;
         }
         
-        .element-container:empty {
-            display: none !important;
+        /* Center alignment */
+        .center-column {
+            max-width: 650px;
+            margin: 0 auto;
+            padding: 10px 20px;
         }
         
-        /* Logo styling - center and proper size */
-        .logo-container {
+        /* Logo */
+        .logo {
             text-align: center;
             margin: 2rem auto 1rem auto;
-            width: 100%;
-            display: flex;
-            justify-content: center;
         }
         
-        /* Page title - properly centered */
-        .page-title {
+        /* Page header */
+        .page-header {
             text-align: center;
-            font-size: 2.2rem;
-            margin: 1rem 0;
+            margin: 1.5rem 0;
             color: white;
+            font-size: 2.5rem;
             font-weight: 600;
-            width: 100%;
-            display: block;
         }
         
-        /* Form container - centered with narrow width */
-        .form-wrapper {
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 0 20px;
+        /* Form elements */
+        .form-control {
+            max-width: 300px;
+            margin: 1rem auto;
         }
         
-        /* Input container - make input fields narrower */
-        .input-container {
-            max-width: 250px !important;
-            margin: 0 auto !important;
+        .radio-wrapper {
+            text-align: center;
+            margin: 1rem auto;
         }
         
-        /* Make inputs narrower */
-        .stTextInput, .stButton {
-            max-width: 250px !important;
-            margin: 0 auto !important;
-        }
-        
-        /* Style the submit button and limit width */
+        /* Submit button */
         .submit-button {
-            max-width: 150px !important; 
-            margin: 1rem auto !important;
-        }
-        
-        /* About section styling - properly centered */
-        .about-container {
-            max-width: 650px;
-            margin: 2rem auto;
-            padding: 20px;
-            background-color: rgba(30, 30, 30, 0.8);
-            border-radius: 10px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
+            max-width: 150px;
+            margin: 1.5rem auto;
             text-align: center;
         }
         
-        .about-container h2 {
+        /* About section */
+        .about-section {
+            margin-top: 3rem;
+            padding: 1.5rem;
+            background-color: rgba(30, 30, 30, 0.7);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .about-section h2 {
+            text-align: center;
             color: #8a6d17;
             margin-bottom: 1rem;
-            text-align: center;
         }
         
-        /* Fix radio button centering */
-        .stRadio > div {
-            display: flex;
-            justify-content: center !important;
-        }
-        
-        /* Hide sidebar for login page */
+        /* Hide sidebar */
         [data-testid="stSidebar"] {
             visibility: hidden;
             width: 0 !important;
+        }
+        
+        /* Other elements */
+        .stButton button {
+            background-color: #8a6d17 !important;
+            color: white !important;
+            width: 100%;
+        }
+        
+        /* Override Streamlit defaults */
+        div[data-testid="stVerticalBlock"] > div:empty {
+            display: none !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         
         /* Make form labels white */
@@ -340,19 +328,17 @@ def login_page():
             color: white !important;
         }
         
-        /* Fix textarea boxes that might be appearing */
-        textarea {
-            display: none !important;
-        }
-        
-        /* Remove default horizontal lines */
-        hr {
+        /* Remove the 'Choose an option' text */
+        [data-testid="stRadio"] > label {
             display: none !important;
         }
     </style>
     """, unsafe_allow_html=True)
     
-    # Display logo (larger and centered)
+    # Start the centered column layout
+    st.markdown('<div class="center-column">', unsafe_allow_html=True)
+    
+    # Logo section
     logo_paths = [
         "./assets/wealthwise-logo-zip-file/svg/logo-no-background.svg",
         "./assets/wealthwise-logo-zip-file/png/logo-no-background.png",
@@ -367,34 +353,35 @@ def login_page():
             logo_path = path
             break
     
-    # Better logo centering
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        if logo_path:
-            st.image(logo_path, width=250)
+    # Display logo
+    st.markdown('<div class="logo">', unsafe_allow_html=True)
+    if logo_path:
+        st.image(logo_path, width=200)
+    st.markdown('</div>', unsafe_allow_html=True)
     
-    # Page title
-    st.markdown("<h1 class='page-title'>WealthWise Login</h1>", unsafe_allow_html=True)
+    # Page header
+    st.markdown('<h1 class="page-header">WealthWise Login</h1>', unsafe_allow_html=True)
     
-    # Create a wrapper for the form with controlled width
-    st.markdown('<div class="form-wrapper">', unsafe_allow_html=True)
+    # Login/Register radio buttons - hide the "Choose an option" text
+    st.markdown('<div class="radio-wrapper">', unsafe_allow_html=True)
+    auth_mode = st.radio("", ["Login", "Register"], horizontal=True, label_visibility="collapsed")
+    st.markdown('</div>', unsafe_allow_html=True)
     
-    # Login/Register selection
-    auth_mode = st.radio("Choose an option:", ["Login", "Register"], horizontal=True)
-    
-    # Username input - controlled width
+    # Username field
+    st.markdown('<div class="form-control">', unsafe_allow_html=True)
     username = st.text_input("Username").strip()
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Admin password field (conditional)
     password = ""
     if username.lower() == "admin":
+        st.markdown('<div class="form-control">', unsafe_allow_html=True)
         password = st.text_input("Admin Password", type="password")
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    # Submit button with controlled width
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col2:
-        submit_button = st.button("Submit", key="login_submit")
-    
+    # Submit button
+    st.markdown('<div class="submit-button">', unsafe_allow_html=True)
+    submit_button = st.button("Submit")
     st.markdown('</div>', unsafe_allow_html=True)
     
     # Process form submission
@@ -439,8 +426,8 @@ def login_page():
     elif submit_button:
         st.warning("Please enter a username.")
     
-    # About Section with better styling and centering
-    st.markdown('<div class="about-container">', unsafe_allow_html=True)
+    # About Section
+    st.markdown('<div class="about-section">', unsafe_allow_html=True)
     st.markdown("<h2>About WealthWise</h2>", unsafe_allow_html=True)
     st.write("A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments.")
     st.write("This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.")
@@ -451,6 +438,9 @@ def login_page():
     with col2:
         st.write("**Register:** Create a new portfolio")
     
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Close the centered column
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Function to check if user exists
