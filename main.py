@@ -242,30 +242,35 @@ def get_base64_encoded_image(image_path):
 def login_page():
     """Display the enhanced login/registration page with centered elements and no rectangular box"""
     
-    # Test the background image by displaying it directly
-    st.write("Testing background image visibility:")
-    bg_image_path = "./assets/wealthwise-logo-zip-file/background-image.png"
-    
-    if os.path.exists(bg_image_path):
-        st.image(bg_image_path, caption="Background Image Test", width=300)
-        st.write(f"✅ Image found at: {bg_image_path}")
-    else:
-        st.error(f"❌ Image not found at: {bg_image_path}")
+    # Add background image directly using Streamlit's recommended approach
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background-image: url("./assets/wealthwise-logo-zip-file/background-image.png");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
         
-        # List files in the directory to help debug
-        if os.path.exists("./assets/wealthwise-logo-zip-file/"):
-            files = os.listdir("./assets/wealthwise-logo-zip-file/")
-            st.write("Files in directory:")
-            st.write(files)
-        else:
-            st.error("Directory not found: ./assets/wealthwise-logo-zip-file/")
-    
-    # Custom CSS for the login page with better centering for radio buttons
-    st.markdown("""
-    <style>
-        /* Background color fallback */
-        [data-testid="stAppViewContainer"] {
-            background-color: #191a16;
+        /* Add semi-transparent overlay for readability */
+        .stApp::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(25, 26, 22, 0.7);
+            z-index: 0;
+            pointer-events: none; /* Allow clicks to pass through */
+        }
+        
+        /* Ensure content is above the overlay */
+        .stApp > * {
+            position: relative;
+            z-index: 1;
         }
         
         /* Remove unwanted elements and boxes */
@@ -330,6 +335,7 @@ def login_page():
             border-radius: 5px;
             border: 1px solid rgba(140, 122, 49, 0.2);
             text-align: center;
+            background-color: rgba(25, 26, 22, 0.5);
         }
         
         .about-section h2 {
@@ -373,8 +379,10 @@ def login_page():
             max-width: 400px !important;
             margin: 0 auto !important;
         }
-    </style>
-    """, unsafe_allow_html=True)
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
     
     # Start the centered column layout
     st.markdown('<div class="center-column">', unsafe_allow_html=True)
@@ -490,7 +498,7 @@ def login_page():
     
     # Close the centered column
     st.markdown('</div>', unsafe_allow_html=True)
-    
+
 
 # Function to check if user exists
 def user_exists(username):
