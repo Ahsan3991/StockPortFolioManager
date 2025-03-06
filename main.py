@@ -288,8 +288,8 @@ def login_page():
     # Display explanatory message
     st.markdown("""
     ### About WealthWise
-    **A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments.** 
-    **This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.**
+    A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments."\n"
+    This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.
     
     - **Login**: Access your existing portfolio
     - **Register**: Create a new portfolio
