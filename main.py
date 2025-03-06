@@ -241,50 +241,21 @@ def get_base64_encoded_image(image_path):
 
 def login_page():
     """Display the enhanced login/registration page with centered elements and no rectangular box"""
-    
-    # Alternative approach for background image using base64 encoding
-    import base64
-    
-    # Try to load the background image
-    bg_image_path = "./assets/wealthwise-logo-zip-file/background-image.png"
-    
-    # Convert image to base64
-    if os.path.exists(bg_image_path):
-        with open(bg_image_path, "rb") as f:
-            img_data = f.read()
-            b64_encoded = base64.b64encode(img_data).decode()
-            bg_style = f"background-image: url(data:image/png;base64,{b64_encoded});"
-    else:
-        bg_style = "background-color: #191a16;"  # Fallback color
+    page_bg_img = f"""
+    <style>
+
+    .st-emotion-cache-uf99v8 {{
+        background-image: url("https://github.com/Ahsan3991/StockPortFolioManager/blob/testing/assets/wealthwise-logo-zip-file/background-image.png");
+        background-size: cover;
+
+    }}
+    </style>
+    """
     
     # Custom CSS for the login page with better centering for radio buttons
     st.markdown(
         f"""
         <style>
-        .stApp {{
-            {bg_style}
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-        }}
-        
-        /* Fix for scrolling - ensure body/html has proper height */
-        body, html {{
-            height: 100%;
-            overflow-y: auto !important;
-        }}
-        
-        /* Overlay */
-        .overlay {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(25, 26, 22, 0.7);
-            z-index: 0;
-        }}
         
         /* Remove unwanted elements and boxes */
         .element-container:has(.stTextArea) {{
@@ -404,6 +375,9 @@ def login_page():
     
     # Start the centered column layout
     st.markdown('<div class="center-column">', unsafe_allow_html=True)
+
+    #add logo
+    st.markdown(page_bg_img, unsafe_allow_html=True)
     
     # Logo section
     logo_paths = [
