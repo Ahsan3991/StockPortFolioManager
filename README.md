@@ -1,11 +1,11 @@
 # Asset Portfolio Manager called WealthWise 📈
 
-A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments. This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.
+A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments. This tool helps investors maintain a clear record of their investments and analyze their portfolio performance. The application uses SQLite for data storage, with separate databases for each user. It integrates with external APIs like GoldAPI for metal prices and uses the PSX (Pakistan Stock Exchange) data reader for stock prices.
 
-## 🌟 Features
+## 🌟 Start you investment journey today! 
 
 ### Trade Management
-- **Upload Trade Receipts**: Automatically extract trade details from PDF receipts
+- **Upload Trade Receipts**: Automatically extract trade details from PDF receipts (not deployed yet)
 - **Manual Trade Entry**: Add trades manually with a user-friendly interface
 - **Edit & Delete**: Modify or remove existing trades as needed
 - **Search Functionality**: Easily find specific trades by memo number, stock name, or date
@@ -15,6 +15,12 @@ A comprehensive web application built with Streamlit for managing your portfolio
 - **Manual Dividend Entry**: Add dividend records manually
 - **Track Tax Deductions**: Monitor tax deducted from dividend payments
 - **Dividend History**: View complete dividend payment history
+
+### Precious Metal Trades
+- **Upload Trade Receipts**: Automatically extract trade details from PDF receipts (not deployed yet)
+- **Manual Trade Entry**: Add trades manually with a user-friendly interface. Options to choose between Gold, Silver, Palladium and more
+- **Edit & Delete**: Modify or remove existing trades as needed
+- **Search Functionality**: Easily find specific trades by memo number, metal type, or date
 
 ### Portfolio Analysis
 - **Current Positions**: View all active positions with quantities and average prices
