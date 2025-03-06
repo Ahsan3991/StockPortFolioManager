@@ -389,7 +389,7 @@ def login_page():
     # Start the centered column layout
     st.markdown('<div class="center-column">', unsafe_allow_html=True)
 
-    #add logo
+    # Add background image
     st.markdown(page_bg_img, unsafe_allow_html=True)
     
     # Logo section
