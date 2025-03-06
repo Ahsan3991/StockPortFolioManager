@@ -373,11 +373,18 @@ def login_page():
             break
     
     # Display logo
-    st.markdown('<div class="logo">', unsafe_allow_html=True)
-    if logo_path:
-        st.image(logo_path, width=200)
-    st.markdown('</div>', unsafe_allow_html=True)
-    
+    # Create a centered container for the logo
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col1: 
+        st.write(" ")
+    with col3:
+        st.markdown('<div class="logo">', unsafe_allow_html=True)
+        if logo_path:
+            st.image(logo_path, width=600)
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col1: 
+        st.write(" ")
+
     # Page header
     st.markdown('<h1 class="page-header">WealthWise Login</h1>', unsafe_allow_html=True)
     
