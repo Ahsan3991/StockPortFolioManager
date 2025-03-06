@@ -233,13 +233,14 @@ if 'admin' not in [u.lower() for u in users]:
 # Custom login page with admin password support
 def login_page():
     """Display the enhanced login/registration page with centered elements and no rectangular box"""
-    
+    base_background_path = "./assets/wealthwise-logo-zip-file/background-image.png"
+
     # Custom CSS for the login page with better centering for radio buttons
     st.markdown("""
     <style>
         /* Background color fallback */
         [data-testid="stAppViewContainer"] {
-            background-color: #191a16;
+        background-image: url("./assets/wealthwise-logo-zip-file/background-image.png")
         }
         
         /* Remove unwanted elements and boxes */
@@ -369,8 +370,7 @@ def login_page():
             logo_path = path
             break
     
-    # Display logo
-    # Create a centered container for the logo
+    # Create a centered container
     col1, col2, col3 = st.columns([1, 2, 1])
   
     with col1: 
