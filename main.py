@@ -239,11 +239,21 @@ def login_page():
     .st-emotion-cache-uf99v8 {{
         background-image: url("https://raw.githubusercontent.com/Ahsan3991/StockPortFolioManager/refs/heads/testing/assets/wealthwise-logo-zip-file/background-image.png");
         background-size: cover;
+        background-position: center;
         position: relative;
-        z-index: -1;
-        
-
     }}
+
+    .st-emotion-cache-uf99v8::before {{
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);  /* Dark transparent overlay */
+        z-index: -1;  /* Places it behind content */
+    }}
+ 
     </style>
     """
 
