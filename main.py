@@ -238,9 +238,27 @@ def login_page():
     # Custom CSS for the login page with better centering for radio buttons
     st.markdown("""
     <style>
-        /* Background color fallback */
+        /* Background image */
         [data-testid="stAppViewContainer"] {
-        background-image: url("./assets/wealthwise-logo-zip-file/background-image.png")
+            background-image: url('assets/wealthwise-logo-zip-file/background-image.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            /* Keep the dark color as fallback */
+            background-color: #191a16;
+        }
+        
+        /* Add semi-transparent overlay to ensure text readability */
+        [data-testid="stAppViewContainer"]::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(25, 26, 22, 0.7); /* Semi-transparent version of your background color */
+            z-index: -1;
         }
         
         /* Remove unwanted elements and boxes */
