@@ -232,9 +232,9 @@ if 'admin' not in [u.lower() for u in users]:
 
 # Custom login page with admin password support
 def login_page():
-    """Display the enhanced login/registration page with strict center alignment"""
+    """Display the enhanced login/registration page with centered elements and no rectangular box"""
     
-    # Custom CSS for the login page with a single centered column approach
+    # Custom CSS for the login page with better centering for radio buttons
     st.markdown("""
     <style>
         /* Background color fallback */
@@ -242,7 +242,7 @@ def login_page():
             background-color: #191a16;
         }
         
-        /* Remove unwanted elements */
+        /* Remove unwanted elements and boxes */
         .element-container:has(.stTextArea) {
             display: none !important;
         }
@@ -275,9 +275,18 @@ def login_page():
             margin: 1rem auto;
         }
         
+        /* Center the radio buttons */
         .radio-wrapper {
-            text-align: center;
+            display: flex;
+            justify-content: center !important;
+            text-align: center !important;
             margin: 1rem auto;
+        }
+        
+        /* Style the radio buttons container */
+        .stRadio > div {
+            display: flex;
+            justify-content: center !important;
         }
         
         /* Submit button */
@@ -332,6 +341,21 @@ def login_page():
         [data-testid="stRadio"] > label {
             display: none !important;
         }
+        
+        /* Remove the rectangular box above About WealthWise */
+        div.css-1kyxreq {
+            display: none !important;
+        }
+        
+        .stTextInput {
+            max-width: 400px !important;
+            margin: 0 auto !important;
+        }
+        
+        .stButton {
+            max-width: 400px !important;
+            margin: 0 auto !important;
+        }
     </style>
     """, unsafe_allow_html=True)
     
@@ -362,8 +386,9 @@ def login_page():
     # Page header
     st.markdown('<h1 class="page-header">WealthWise Login</h1>', unsafe_allow_html=True)
     
-    # Login/Register radio buttons - hide the "Choose an option" text
+    # Login/Register radio buttons - centered
     st.markdown('<div class="radio-wrapper">', unsafe_allow_html=True)
+    # Using label_visibility="collapsed" to hide the "Choose an option" text
     auth_mode = st.radio("", ["Login", "Register"], horizontal=True, label_visibility="collapsed")
     st.markdown('</div>', unsafe_allow_html=True)
     
