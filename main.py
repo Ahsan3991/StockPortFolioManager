@@ -234,170 +234,73 @@ if 'admin' not in [u.lower() for u in users]:
 def login_page():
     """Display the enhanced login/registration page with styled background"""
     
-    # Load the background image
-    import os
+    # Set basic streamlit page configuration
+    st.set_page_config(
+        page_title="WealthWise Login",
+        page_icon="📊",
+        layout="centered",
+        initial_sidebar_state="collapsed",
+    )
     
-    # Check if background image exists in assets folder
-    bg_image_path = "./assets/background-image.jpg"
-    if not os.path.exists(bg_image_path):
-        # Fallback paths in case the primary path doesn't exist
-        alternative_paths = [
-            "./assets/images/background.jpg",
-            "./assets/img/background.jpg",
-            "./assets/backgrounds/background.jpg"
-        ]
-        
-        for path in alternative_paths:
-            if os.path.exists(path):
-                bg_image_path = path
-                break
-    
-    # Custom CSS for the login page
-    st.markdown(f"""
+    # Custom CSS for the login page - simplified version
+    st.markdown("""
     <style>
-        /* Main container styling */
-        .main-container {{
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            padding: 1rem;
+        /* Base styling */
+        body {
             color: white;
-        }}
+            background-color: #1E1E1E;
+        }
         
-        /* Background styling */
-        [data-testid="stAppViewContainer"] {{
-            background-image: url('{bg_image_path}');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            position: relative;
-        }}
-        
-        /* Overlay to darken the background image slightly */
-        [data-testid="stAppViewContainer"]::before {{
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: -1;
-        }}
-        
-        /* Logo styling */
-        .logo-container {{
-            text-align: center;
-            margin-bottom: 2rem;
-        }}
-        
-        .logo-container img {{
-            max-width: 220px;
-            margin-bottom: 1rem;
-        }}
-        
-        /* Form container styling */
-        .form-container {{
-            background: rgba(30, 30, 30, 0.8);
-            border-radius: 10px;
-            padding: 30px;
-            width: 100%;
+        /* Container styles */
+        .login-container {
             max-width: 450px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            margin-bottom: 2rem;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.1);
-        }}
-        
-        /* About section styling */
-        .about-container {{
-            background: rgba(30, 30, 30, 0.8);
+            margin: 0 auto;
+            padding: 2rem;
             border-radius: 10px;
-            padding: 30px;
-            width: 100%;
-            max-width: 680px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            margin-top: 2rem;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.1);
-        }}
+            background-color: rgba(42, 42, 42, 0.8);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
         
-        .about-container h2 {{
-            color: #8a6d17;
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-        }}
+        /* Page header */
+        .page-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: #F0F0F0;
+        }
         
-        .about-container p {{
-            line-height: 1.6;
-            margin-bottom: 1rem;
-        }}
-        
-        .about-container ul {{
-            margin-left: 20px;
-        }}
-        
-        .about-container li {{
-            margin-bottom: 0.5rem;
-        }}
-        
-        /* Custom styling for buttons and inputs */
-        .stButton>button {{
-            width: 100%;
+        /* Form elements */
+        .stButton > button {
             background-color: #8a6d17;
             color: white;
             border: none;
-            padding: 10px 0;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }}
+            width: 100%;
+        }
         
-        .stButton>button:hover {{
+        .stButton > button:hover {
             background-color: #a58520;
-        }}
+        }
         
-        .stTextInput>div>div>input {{
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #555;
-            background-color: #333;
-            color: white;
-        }}
+        /* About section */
+        .about-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: rgba(42, 42, 42, 0.8);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
         
-        /* For radio buttons */
-        .stRadio>div {{
-            display: flex;
-            justify-content: center;
-        }}
+        .about-section h3 {
+            color: #8a6d17;
+            margin-bottom: 1rem;
+        }
         
-        .stRadio>div>div {{
-            display: flex;
-            gap: 20px;
-        }}
-        
-        /* Hide Streamlit elements we don't want on the login page */
-        #MainMenu, footer, header {{
-            visibility: hidden;
-        }}
-        
-        /* Make form labels more visible */
-        label {{
-            color: white !important;
-            font-weight: 500;
-        }}
+        /* Hide default elements */
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
     </style>
-    
-    <div class="main-container">
-        <div class="logo-container">
-            <!-- Logo will be added dynamically based on available paths -->
-            <h1>WealthWise Login</h1>
-        </div>
-    </div>
     """, unsafe_allow_html=True)
     
     # Find and display the logo
@@ -415,95 +318,96 @@ def login_page():
             logo_path = path
             break
     
-    # Display the logo at the top
+    # Display Logo
     if logo_path:
         col1, logo_col, col3 = st.columns([1, 2, 1])
         with logo_col:
             st.image(logo_path, width=220)
     
-    # Create centered form container
-    with st.container():
-        # Use columns to center the form
-        col1, form_col, col2 = st.columns([1, 2, 1])
-        
-        with form_col:
-            # Add a styled container for the form
-            st.markdown('<div class="form-container">', unsafe_allow_html=True)
-            
-            # Login/register selection with styled radio buttons
-            auth_mode = st.radio("Choose an option:", ["Login", "Register"], horizontal=True)
-            
-            # Add space between radio and input
-            st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-            
-            # Username input
-            username = st.text_input("Username").strip()
-            
-            # Only show password field when username is "admin"
-            password = ""
-            if username.lower() == "admin":
-                password = st.text_input("Admin Password", type="password")
-            
-            # Submit button
-            submit_button = st.button("Submit")
-            
-            # Close the form container div
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            if submit_button and username:
-                if auth_mode == "Login":
-                    if username.lower() == "admin":
-                        # Special handling for admin login
-                        if 'ADMIN_PASSWORD' in locals() and password == ADMIN_PASSWORD:
-                            st.session_state.logged_in = True
-                            st.session_state.username = "admin"
-                            st.session_state.is_admin = True
-                            st.success("Welcome, Administrator!")
-                            st.rerun()
-                        else:
-                            # Show error message for incorrect admin password
-                            st.error("❌ Incorrect admin password.")
-                            time.sleep(1)  # Wait for 1 second
-                            st.rerun()  # Reload the page for retry
-                    elif user_exists(username):
-                        st.session_state.logged_in = True
-                        st.session_state.username = username
-                        st.session_state.is_admin = False
-                        st.success(f"Welcome back, {username}!")
-                        st.rerun()
-                    else:
-                        st.error(f"User '{username}' does not exist. Please register first.")
-                else:  # Register
-                    if username.lower() == "admin":
-                        st.error("Cannot register with reserved username 'admin'.")
-                    elif register_user(username):
-                        st.session_state.logged_in = True
-                        st.session_state.username = username
-                        st.session_state.is_admin = False
-                        st.success(f"Account created for {username}!")
-                        st.rerun()
-                    else:
-                        st.error(f"Username '{username}' already exists. Please choose another.")
-            
-            elif submit_button:
-                st.warning("Please enter a username.")
+    # Page title
+    st.markdown("<h1 class='page-title'>WealthWise Login</h1>", unsafe_allow_html=True)
     
-    # About section at the bottom
-    with st.container():
-        col1, about_col, col2 = st.columns([1, 4, 1])
-        
-        with about_col:
-            st.markdown("""
-            <div class="about-container">
-                <h2>About WealthWise</h2>
-                <p>A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments.</p>
-                <p>This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.</p>
-                <ul>
-                    <li><strong>Login:</strong> Access your existing portfolio</li>
-                    <li><strong>Register:</strong> Create a new portfolio</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
+    # Login Form Container
+    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+    
+    # Login/Register Radio Button
+    auth_mode = st.radio("Choose an option:", ["Login", "Register"], horizontal=True)
+    
+    # Username field
+    username = st.text_input("Username").strip()
+    
+    # Admin password field (conditionally)
+    password = ""
+    if username.lower() == "admin":
+        password = st.text_input("Admin Password", type="password")
+    
+    # Submit button
+    submit_button = st.button("Submit")
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Process form submission
+    if submit_button and username:
+        if auth_mode == "Login":
+            if username.lower() == "admin":
+                # Special handling for admin login
+                if 'ADMIN_PASSWORD' in globals() and password == ADMIN_PASSWORD:
+                    st.session_state.logged_in = True
+                    st.session_state.username = "admin"
+                    st.session_state.is_admin = True
+                    st.success("Welcome, Administrator!")
+                    time.sleep(0.5)
+                    st.rerun()
+                else:
+                    # Show error message for incorrect admin password
+                    st.error("❌ Incorrect admin password.")
+            elif user_exists(username):
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.is_admin = False
+                st.success(f"Welcome back, {username}!")
+                time.sleep(0.5)
+                st.rerun()
+            else:
+                st.error(f"User '{username}' does not exist. Please register first.")
+        else:  # Register
+            if username.lower() == "admin":
+                st.error("Cannot register with reserved username 'admin'.")
+            elif register_user(username):
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.is_admin = False
+                st.success(f"Account created for {username}!")
+                time.sleep(0.5)
+                st.rerun()
+            else:
+                st.error(f"Username '{username}' already exists. Please choose another.")
+    
+    elif submit_button:
+        st.warning("Please enter a username.")
+    
+    # About Section
+    st.markdown("<div class='about-section'>", unsafe_allow_html=True)
+    st.markdown("<h3>About WealthWise</h3>", unsafe_allow_html=True)
+    st.write("A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments.")
+    st.write("This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.write("**Login:** Access your existing portfolio")
+    with col2:
+        st.write("**Register:** Create a new portfolio")
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Reset page config when done
+    if st.session_state.logged_in:
+        st.set_page_config(
+            page_title="WealthWise",
+            page_icon="📊",
+            layout="wide",
+            initial_sidebar_state="expanded",
+        )
 
 # Function to check if user exists
 def user_exists(username):
