@@ -279,7 +279,7 @@ def login_page():
         .st-emotion-cache-6sdwd6 {{
             position: relative; 
             z-index: 1;
-            background-color: rgba(25, 26, 22, 0.5);
+            background-color: rgba(25, 26, 22, 0.8);
         }}
         
         /* Logo */
