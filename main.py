@@ -377,12 +377,12 @@ def login_page():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col1: 
         st.write(" ")
-    with col3:
+    with col2:
         st.markdown('<div class="logo">', unsafe_allow_html=True)
         if logo_path:
             st.image(logo_path, width=600)
         st.markdown('</div>', unsafe_allow_html=True)
-    with col1: 
+    with col3: 
         st.write(" ")
 
     # Page header
