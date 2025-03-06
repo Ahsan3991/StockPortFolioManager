@@ -382,11 +382,13 @@ def login_page():
         if logo_path:
             st.image(logo_path, width=900)
         st.markdown('</div>', unsafe_allow_html=True)
+        # Page header
+        st.markdown('<h1 class="page-header">WealthWise Login</h1>', unsafe_allow_html=True)
     with col3: 
         st.write(" ")
 
     # Page header
-    st.markdown('<h1 class="page-header">WealthWise Login</h1>', unsafe_allow_html=True)
+   # st.markdown('<h1 class="page-header">WealthWise Login</h1>', unsafe_allow_html=True)
     
     # Login/Register radio buttons - centered
     st.markdown('<div class="radio-wrapper">', unsafe_allow_html=True)
