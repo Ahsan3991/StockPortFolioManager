@@ -242,7 +242,7 @@ def login_page():
         background-position: center;
         position: relative;
     }}
-
+    
     .st-emotion-cache-uf99v8::before {{
         content: "";
         position: absolute;
