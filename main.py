@@ -408,14 +408,17 @@ def login_page():
         st.markdown('<div class="submit-button">', unsafe_allow_html=True)
         submit_button = st.button("Submit")
         st.markdown('</div>', unsafe_allow_html=True)
-
-         # About Section
-        st.markdown('<div class="about-section">', unsafe_allow_html=True)
-        st.markdown("<h2>About WealthWise</h2>", unsafe_allow_html=True)
-        st.write("A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments.")
-        st.write("This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.")
-        st.write("**Login:** Access your existing portfolio      |     **Register:** Create a new portfolio ")
-        st.markdown('</div>', unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col1: st.write(" ")
+        with col2:
+            # About Section
+            st.markdown('<div class="about-section">', unsafe_allow_html=True)
+            st.markdown("<h2>About WealthWise</h2>", unsafe_allow_html=True)
+            st.write("A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments.")
+            st.write("This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.")
+            st.write("**Login:** Access your existing portfolio      |     **Register:** Create a new portfolio ")
+            st.markdown('</div>', unsafe_allow_html=True)
+        with col3: st.write(" ")
    
     with col3: 
         st.write(" ")
