@@ -170,7 +170,7 @@ st.markdown("""
     [data-testid="stSidebar"] .st-bq,
     [data-testid="stSidebar"] .st-af,
     [data-testid="stSidebar"] .st-ae {
-        font-size: 2.5rem !important;
+        font-size: 2rem !important;
         font-weight: bold !important;
         margin-top: 1rem !important;
         margin-bottom: 1rem !important;
