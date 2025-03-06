@@ -287,7 +287,7 @@ def login_page():
         .logo {{
             text-align: center;
             margin: 2rem auto 1rem auto;
-            max-width: 1000px;
+            width: 100%;
             
         }}
         
@@ -418,7 +418,7 @@ def login_page():
     with col2:
         st.markdown('<div class="logo">', unsafe_allow_html=True)
         if logo_path:
-            st.image(logo_path, width=1000, use_container_width=True)
+            st.image(logo_path, width=1000)
         st.markdown('</div>', unsafe_allow_html=True)
         # Page header
         st.markdown('<h2 class="page-header">Please Login or Register</h2>', unsafe_allow_html=True)
