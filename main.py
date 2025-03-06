@@ -271,7 +271,7 @@ def login_page():
         .center-column {{
             max-width: 1000px;
             margin: 0 auto;
-            padding: 10px 20px;
+            padding: 5px 10px;
             position: relative; 
             z-index: 1;
             
