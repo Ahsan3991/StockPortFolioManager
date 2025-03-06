@@ -299,11 +299,11 @@ def login_page():
         
         /* About section */
         .about-section {
-            margin-top: 2rem;
-            padding: 1.5rem;
+            margin-top: 1rem;
+            padding: 1rem;
            # background-color: rgba(30, 30, 30, 0.7);
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            border: 1px solid rgba(140, 122, 49, 0.2);
             text-align: center;
         }
         
