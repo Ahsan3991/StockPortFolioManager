@@ -241,6 +241,7 @@ def login_page():
         background-size: cover;
         background-position: center;
         position: relative;
+        background: rgba(0, 0, 0, 0.1);
         
 
     }}
