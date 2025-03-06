@@ -234,52 +234,69 @@ if 'admin' not in [u.lower() for u in users]:
 def login_page():
     """Display the enhanced login/registration page with styled background"""
     
-    # Set basic streamlit page configuration
-    st.set_page_config(
-        page_title="WealthWise Login",
-        page_icon="📊",
-        layout="centered",
-        initial_sidebar_state="collapsed",
-    )
-    
-    # Custom CSS for the login page - simplified version
+    # Custom CSS for the login page
     st.markdown("""
     <style>
-        /* Base styling */
-        body {
-            color: white;
-            background-color: #1E1E1E;
+        /* Override background for login page */
+        [data-testid="stAppViewContainer"] {
+            background-image: url('./assets/background-image.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        
+        /* Overlay to darken the background image */
+        [data-testid="stAppViewContainer"]::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: -1;
         }
         
         /* Container styles */
         .login-container {
             max-width: 450px;
-            margin: 0 auto;
+            margin: 1rem auto;
             padding: 2rem;
             border-radius: 10px;
             background-color: rgba(42, 42, 42, 0.8);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
             border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
         }
         
-        /* Page header */
+        /* Logo styling */
+        .logo-wrapper {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        /* Page title */
         .page-title {
             text-align: center;
             font-size: 2rem;
-            margin-bottom: 2rem;
-            color: #F0F0F0;
+            margin: 1.5rem 0;
+            color: white;
+            font-weight: 600;
         }
         
         /* Form elements */
         .stButton > button {
-            background-color: #8a6d17;
-            color: white;
-            border: none;
+            background-color: #8a6d17 !important;
+            color: white !important;
+            border: none !important;
             width: 100%;
+            padding: 0.5rem !important;
+            font-weight: bold !important;
+            border-radius: 5px !important;
         }
         
         .stButton > button:hover {
-            background-color: #a58520;
+            background-color: #a58520 !important;
         }
         
         /* About section */
@@ -289,6 +306,10 @@ def login_page():
             background-color: rgba(42, 42, 42, 0.8);
             border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 680px;
+            margin: 2rem auto;
+            color: white;
+            backdrop-filter: blur(5px);
         }
         
         .about-section h3 {
@@ -296,10 +317,32 @@ def login_page():
             margin-bottom: 1rem;
         }
         
-        /* Hide default elements */
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
-        header {visibility: hidden;}
+        /* Make form labels more visible */
+        label {
+            color: white !important;
+            font-weight: 500 !important;
+        }
+        
+        /* Hide sidebar for login page */
+        [data-testid="stSidebar"] {
+            visibility: hidden;
+            width: 0px;
+        }
+        
+        /* Ensure content is centered */
+        .block-container {
+            max-width: 800px;
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+            margin: 0 auto;
+        }
+        
+        /* Ensure inputs stand out */
+        .stTextInput > div > div > input {
+            background-color: rgba(71, 71, 71, 0.8) !important;
+            color: white !important;
+            border: 1px solid #555 !important;
+        }
     </style>
     """, unsafe_allow_html=True)
     
@@ -320,9 +363,9 @@ def login_page():
     
     # Display Logo
     if logo_path:
-        col1, logo_col, col3 = st.columns([1, 2, 1])
-        with logo_col:
-            st.image(logo_path, width=220)
+        st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
+        st.image(logo_path, width=220)
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Page title
     st.markdown("<h1 class='page-title'>WealthWise Login</h1>", unsafe_allow_html=True)
@@ -332,6 +375,9 @@ def login_page():
     
     # Login/Register Radio Button
     auth_mode = st.radio("Choose an option:", ["Login", "Register"], horizontal=True)
+    
+    # Add some spacing
+    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
     
     # Username field
     username = st.text_input("Username").strip()
@@ -356,17 +402,19 @@ def login_page():
                     st.session_state.username = "admin"
                     st.session_state.is_admin = True
                     st.success("Welcome, Administrator!")
-                    time.sleep(0.5)
+                    time.sleep(1)  # Use time delay already imported in your script
                     st.rerun()
                 else:
                     # Show error message for incorrect admin password
                     st.error("❌ Incorrect admin password.")
+                    time.sleep(1)
+                    st.rerun()
             elif user_exists(username):
                 st.session_state.logged_in = True
                 st.session_state.username = username
                 st.session_state.is_admin = False
                 st.success(f"Welcome back, {username}!")
-                time.sleep(0.5)
+                time.sleep(1)
                 st.rerun()
             else:
                 st.error(f"User '{username}' does not exist. Please register first.")
@@ -378,7 +426,7 @@ def login_page():
                 st.session_state.username = username
                 st.session_state.is_admin = False
                 st.success(f"Account created for {username}!")
-                time.sleep(0.5)
+                time.sleep(1)
                 st.rerun()
             else:
                 st.error(f"Username '{username}' already exists. Please choose another.")
@@ -399,15 +447,6 @@ def login_page():
         st.write("**Register:** Create a new portfolio")
     
     st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Reset page config when done
-    if st.session_state.logged_in:
-        st.set_page_config(
-            page_title="WealthWise",
-            page_icon="📊",
-            layout="wide",
-            initial_sidebar_state="expanded",
-        )
 
 # Function to check if user exists
 def user_exists(username):
