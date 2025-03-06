@@ -374,7 +374,7 @@ def login_page():
     
     # Display logo
     # Create a centered container for the logo
-    col1, col2, col3 = st.columns([1, 3, 1])
+    col1, col2, col3 = st.columns([1, 2, 1])
   
     with col1: 
         st.write(" ")
