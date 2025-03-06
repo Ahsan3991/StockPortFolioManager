@@ -187,7 +187,7 @@ st.markdown("""
     
     /* Ensure dropdown options are also larger */
     [data-testid="stSidebar"] select option {
-        font-size: 1.2rem !important;
+        font-size: 1rem !important;
     }
     
     /* Add some space after the title section */
