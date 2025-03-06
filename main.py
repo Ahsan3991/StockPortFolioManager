@@ -231,14 +231,6 @@ if 'admin' not in [u.lower() for u in users]:
     register_user('admin')
     st.info("Admin user created on first run")
 
-def get_base64_encoded_image(image_path):
-    """Convert an image file to base64 encoding."""
-    if not os.path.exists(image_path):
-        return None
-    
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode('utf-8')
-
 def login_page():
     """Display the enhanced login/registration page with centered elements and no rectangular box"""
     page_bg_img = f"""
@@ -246,7 +238,9 @@ def login_page():
 
     .st-emotion-cache-uf99v8 {{
         background-image: url("https://raw.githubusercontent.com/Ahsan3991/StockPortFolioManager/refs/heads/testing/assets/wealthwise-logo-zip-file/background-image.png");
-        background-size: cover;
+        background-size: contain;
+        background-position: center;
+        filter: brightness(50%) opacity(80%);
 
     }}
     </style>
