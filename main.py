@@ -242,21 +242,41 @@ def get_base64_encoded_image(image_path):
 def login_page():
     """Display the enhanced login/registration page with centered elements and no rectangular box"""
     
-    # Add background image directly using Streamlit's recommended approach
+    # Alternative approach for background image using base64 encoding
+    import base64
+    
+    # Try to load the background image
+    bg_image_path = "./assets/wealthwise-logo-zip-file/background-image.png"
+    
+    # Convert image to base64
+    if os.path.exists(bg_image_path):
+        with open(bg_image_path, "rb") as f:
+            img_data = f.read()
+            b64_encoded = base64.b64encode(img_data).decode()
+            bg_style = f"background-image: url(data:image/png;base64,{b64_encoded});"
+    else:
+        bg_style = "background-color: #191a16;"  # Fallback color
+    
+    # Custom CSS for the login page with better centering for radio buttons
     st.markdown(
-        """
+        f"""
         <style>
-        .stApp {
-            background-image: url("./assets/wealthwise-logo-zip-file/background-image.png");
+        .stApp {{
+            {bg_style}
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
-        }
+        }}
         
-        /* Add semi-transparent overlay for readability */
-        .stApp::before {
-            content: "";
+        /* Fix for scrolling - ensure body/html has proper height */
+        body, html {{
+            height: 100%;
+            overflow-y: auto !important;
+        }}
+        
+        /* Overlay */
+        .overlay {{
             position: fixed;
             top: 0;
             left: 0;
@@ -264,125 +284,123 @@ def login_page():
             height: 100%;
             background-color: rgba(25, 26, 22, 0.7);
             z-index: 0;
-            pointer-events: none; /* Allow clicks to pass through */
-        }
-        
-        /* Ensure content is above the overlay */
-        .stApp > * {
-            position: relative;
-            z-index: 1;
-        }
+        }}
         
         /* Remove unwanted elements and boxes */
-        .element-container:has(.stTextArea) {
+        .element-container:has(.stTextArea) {{
             display: none !important;
-        }
+        }}
         
         /* Center alignment */
-        .center-column {
+        .center-column {{
             max-width: 1000px;
             margin: 0 auto;
             padding: 10px 20px;
-        }
+            position: relative; 
+            z-index: 1;
+        }}
         
         /* Logo */
-        .logo {
+        .logo {{
             text-align: center;
             margin: 2rem auto 1rem auto;
-        }
+        }}
         
         /* Page header */
-        .page-header {
+        .page-header {{
             text-align: center;
             margin: 1rem 0;
             color: #cfcfcc;
             font-size: 2rem;
             font-weight: 450;
-        }
+        }}
         
         /* Form elements */
-        .form-control {
+        .form-control {{
             max-width: 300px;
             margin: 1rem auto;
-        }
+        }}
         
         /* Center the radio buttons */
-        .radio-wrapper {
+        .radio-wrapper {{
             display: flex;
             justify-content: center !important;
             text-align: center !important;
             margin: 1rem auto;
-        }
+        }}
         
         /* Style the radio buttons container */
-        .stRadio > div {
+        .stRadio > div {{
             display: flex;
             justify-content: center !important;
-        }
+        }}
         
         /* Submit button */
-        .submit-button {
+        .submit-button {{
             max-width: 150px;
             margin: 1.5rem auto;
             text-align: center;
             font-weight: bold;
-        }
+        }}
         
         /* About section */
-        .about-section {
+        .about-section {{
             margin-top: 1rem;
             padding: 1rem;
             border-radius: 5px;
             border: 1px solid rgba(140, 122, 49, 0.2);
             text-align: center;
             background-color: rgba(25, 26, 22, 0.5);
-        }
+        }}
         
-        .about-section h2 {
+        .about-section h2 {{
             text-align: center;
             color: #cfcfcc;
             margin-bottom: 1rem;
-        }
+        }}
         
         /* Hide sidebar */
-        [data-testid="stSidebar"] {
+        [data-testid="stSidebar"] {{
             visibility: hidden;
             width: 0 !important;
-        }
+        }}
         
         /* Other elements */
-        .stButton button {
+        .stButton button {{
             background-color: #8a6d17 !important;
             color: white !important;
             width: 100%;
-        }
+        }}
         
         /* Override Streamlit defaults */
-        div[data-testid="stVerticalBlock"] > div:empty {
+        div[data-testid="stVerticalBlock"] > div:empty {{
             display: none !important;
             height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
-        }
+        }}
         
         /* Remove the 'Choose an option' text */
-        [data-testid="stRadio"] > label {
+        [data-testid="stRadio"] > label {{
             display: none !important;
-        }
+        }}
         
-        .stTextInput {
+        .stTextInput {{
             max-width: 400px !important;
             margin: 0 auto !important;
-        }
+        }}
         
-        .stButton {
+        .stButton {{
             max-width: 400px !important;
             margin: 0 auto !important;
-        }
+        }}
         </style>
         """,
         unsafe_allow_html=True
     )
+    
+    # Add overlay div
+    st.markdown('<div class="overlay"></div>', unsafe_allow_html=True)
     
     # Start the centered column layout
     st.markdown('<div class="center-column">', unsafe_allow_html=True)
