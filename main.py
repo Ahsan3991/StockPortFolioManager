@@ -240,7 +240,7 @@ def login_page():
         background-image: url("https://raw.githubusercontent.com/Ahsan3991/StockPortFolioManager/refs/heads/testing/assets/wealthwise-logo-zip-file/background-image.png");
         background-size: contain;
         background-position: center;
-        filter: brightness(50%) opacity(80%);
+        filter: brightness(100%) opacity(80%);
 
     }}
     </style>
