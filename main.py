@@ -234,93 +234,94 @@ if 'admin' not in [u.lower() for u in users]:
 def login_page():
     """Display the enhanced login/registration page with styled background"""
     
-    # Custom CSS for the login page
+    # Custom CSS for the login page with better form sizing/positioning
     st.markdown("""
     <style>
-        /* Override background for login page */
+        /* Background color fallback */
         [data-testid="stAppViewContainer"] {
-            background-image: url('./assets/background-image.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            background-color: #191a16;
         }
         
-        /* Overlay to darken the background image */
-        [data-testid="stAppViewContainer"]::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            z-index: -1;
-        }
-        
-        /* Container styles */
-        .login-container {
-            max-width: 450px;
-            margin: 1rem auto;
-            padding: 2rem;
-            border-radius: 10px;
-            background-color: rgba(42, 42, 42, 0.8);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
+        /* Remove empty containers that appear as boxes */
+        [data-testid="stVerticalBlock"] > div:empty {
+            display: none !important;
         }
         
         /* Logo styling */
-        .logo-wrapper {
+        .logo-container {
             text-align: center;
-            margin-bottom: 1rem;
+            margin: 2rem auto 1rem auto;
         }
         
         /* Page title */
         .page-title {
             text-align: center;
-            font-size: 2rem;
-            margin: 1.5rem 0;
+            font-size: 2.2rem;
+            margin: 1rem 0 1.5rem 0;
             color: white;
             font-weight: 600;
         }
         
-        /* Form elements */
+        /* Center form container and adjust width */
+        .form-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background-color: rgba(30, 30, 30, 0.8);
+            padding: 25px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Fix radio button positioning */
+        .stRadio > div {
+            display: flex;
+            justify-content: center !important;
+        }
+        
+        /* Style the submit button and limit width */
+        .submit-button-container {
+            max-width: 200px; 
+            margin: 0 auto;
+        }
+        
         .stButton > button {
             background-color: #8a6d17 !important;
             color: white !important;
+            font-weight: bold !important;
             border: none !important;
             width: 100%;
-            padding: 0.5rem !important;
-            font-weight: bold !important;
-            border-radius: 5px !important;
         }
         
-        .stButton > button:hover {
-            background-color: #a58520 !important;
+        /* Input field styling with limited width */
+        .input-container {
+            max-width: 350px;
+            margin: 0 auto;
         }
         
-        /* About section */
-        .about-section {
-            margin-top: 2rem;
-            padding: 1.5rem;
-            background-color: rgba(42, 42, 42, 0.8);
+        /* Remove horizontal line */
+        hr {
+            display: none !important;
+        }
+        
+        /* About section styling */
+        .about-container {
+            max-width: 650px;
+            margin: 2rem auto;
+            padding: 25px;
+            background-color: rgba(30, 30, 30, 0.8);
             border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            max-width: 680px;
-            margin: 2rem auto;
             color: white;
-            backdrop-filter: blur(5px);
         }
         
-        .about-section h3 {
+        .about-container h2 {
             color: #8a6d17;
             margin-bottom: 1rem;
         }
         
-        /* Make form labels more visible */
+        /* Make labels white */
         label {
             color: white !important;
-            font-weight: 500 !important;
         }
         
         /* Hide sidebar for login page */
@@ -328,23 +329,35 @@ def login_page():
             visibility: hidden;
             width: 0px;
         }
-        
-        /* Ensure content is centered */
-        .block-container {
-            max-width: 800px;
-            padding-top: 2rem;
-            padding-bottom: 2rem;
-            margin: 0 auto;
-        }
-        
-        /* Ensure inputs stand out */
-        .stTextInput > div > div > input {
-            background-color: rgba(71, 71, 71, 0.8) !important;
-            color: white !important;
-            border: 1px solid #555 !important;
-        }
     </style>
     """, unsafe_allow_html=True)
+    
+    # Add background image directly using st.image with CSS positioning
+    bg_path = "./assets/wealthwise-logo-zip-file/background-image.jpg"
+    if os.path.exists(bg_path):
+        st.markdown(
+            f"""
+            <style>
+            [data-testid="stAppViewContainer"] {{
+                background-image: url({bg_path});
+                background-size: cover;
+                background-position: center;
+            }}
+            
+            [data-testid="stAppViewContainer"]::before {{
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.6);
+                z-index: -1;
+            }}
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
     
     # Find and display the logo
     logo_paths = [
@@ -361,36 +374,41 @@ def login_page():
             logo_path = path
             break
     
-    # Display Logo
+    # Display larger logo at the top
     if logo_path:
-        st.markdown('<div class="logo-wrapper">', unsafe_allow_html=True)
-        st.image(logo_path, width=220)
+        st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+        st.image(logo_path, width=300)  # Increased logo size
         st.markdown('</div>', unsafe_allow_html=True)
     
     # Page title
     st.markdown("<h1 class='page-title'>WealthWise Login</h1>", unsafe_allow_html=True)
     
-    # Login Form Container
-    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-    
-    # Login/Register Radio Button
-    auth_mode = st.radio("Choose an option:", ["Login", "Register"], horizontal=True)
-    
-    # Add some spacing
-    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-    
-    # Username field
-    username = st.text_input("Username").strip()
-    
-    # Admin password field (conditionally)
-    password = ""
-    if username.lower() == "admin":
-        password = st.text_input("Admin Password", type="password")
-    
-    # Submit button
-    submit_button = st.button("Submit")
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+    # Form container
+    with st.container():
+        st.markdown('<div class="form-container">', unsafe_allow_html=True)
+        
+        # Login/Register selection
+        auth_mode = st.radio("Choose an option:", ["Login", "Register"], horizontal=True)
+        
+        # Username input with container for width control
+        st.markdown('<div class="input-container">', unsafe_allow_html=True)
+        username = st.text_input("Username").strip()
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Admin password field (conditional)
+        if username.lower() == "admin":
+            st.markdown('<div class="input-container">', unsafe_allow_html=True)
+            password = st.text_input("Admin Password", type="password")
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            password = ""
+        
+        # Submit button with width control
+        st.markdown('<div class="submit-button-container">', unsafe_allow_html=True)
+        submit_button = st.button("Submit")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
     # Process form submission
     if submit_button and username:
@@ -402,7 +420,7 @@ def login_page():
                     st.session_state.username = "admin"
                     st.session_state.is_admin = True
                     st.success("Welcome, Administrator!")
-                    time.sleep(1)  # Use time delay already imported in your script
+                    time.sleep(1)
                     st.rerun()
                 else:
                     # Show error message for incorrect admin password
@@ -434,9 +452,9 @@ def login_page():
     elif submit_button:
         st.warning("Please enter a username.")
     
-    # About Section
-    st.markdown("<div class='about-section'>", unsafe_allow_html=True)
-    st.markdown("<h3>About WealthWise</h3>", unsafe_allow_html=True)
+    # About Section with better styling
+    st.markdown('<div class="about-container">', unsafe_allow_html=True)
+    st.markdown("<h2>About WealthWise</h2>", unsafe_allow_html=True)
     st.write("A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments.")
     st.write("This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.")
     
@@ -446,7 +464,8 @@ def login_page():
     with col2:
         st.write("**Register:** Create a new portfolio")
     
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
 # Function to check if user exists
 def user_exists(username):
