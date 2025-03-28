@@ -1,9 +1,22 @@
-# main.py
+# main.py (Part 1: Imports, Configuration, and Session State Initialization)
 import streamlit as st
-import pandas as pd
-import sqlite3
 import os
-import time  # Added import for sleep functionality
+import time
+from dotenv import load_dotenv
+
+# Load modules for authentication and user interface
+from user_auth_ui import login_page, change_password_page, show_user_info
+from admin_panel import show_user_management, show_app_dashboard
+from forget_password import (
+    forgot_password_page, reset_password_page, verify_email_page,
+    resend_verification_email
+)
+from auth import (
+    migrate_users_to_password_system, register_user, check_email_verified,
+    load_users
+)
+
+# Load application modules
 from manual_trade_entry import manual_trade_entry
 from dividend_warrant import manual_dividend_entry
 from sell_trade import sell_trade
@@ -11,28 +24,15 @@ from view_trades import view_trades
 from portfolio_summary import view_portfolio_summary
 from manual_metal_trade_entry import manual_metal_trade_entry
 
-# Import authentication functions
-from auth import (
-    load_users, delete_user, register_user, migrate_users_to_password_system,
-    verify_credentials, user_exists, update_user_password, hash_password
-)
-from db_utils import initialize_user_db, get_db_path
-
-# For .env file support (optional)
+# For .env file support
 try:
-    from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     pass  # dotenv not installed, will use hardcoded fallback
 
-# ADMIN CONFIGURATION
-# Get admin password from environment variables or Streamlit secrets
-if 'ADMIN_PASSWORD' in os.environ:
-    ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
-elif hasattr(st, 'secrets') and 'ADMIN_PASSWORD' in st.secrets:
-    ADMIN_PASSWORD = st.secrets['ADMIN_PASSWORD']
-else:
-    ADMIN_PASSWORD = "admin123"  # Default fallback for local testing
+# ADMIN_PASSWORD is needed in user_auth_ui.py but we'll keep it here for consistency
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 
+                             st.secrets.get('ADMIN_PASSWORD', 'admin123') if hasattr(st, 'secrets') else 'admin123')
 
 # Page Configuration with theme explicitly set to dark
 st.set_page_config(
@@ -42,197 +42,276 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom CSS for overall app styling
-st.markdown("""
-    <style>
-    /* Content container styling */
-    [data-testid="stAppViewContainer"] {
-        background-color: #191a16;  /* Background color, greenish-black */
-    }
+# Initialize session state variables
+def init_session_state():
+    """Initialize all session state variables"""
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+
+    if 'username' not in st.session_state:
+        st.session_state.username = None
+
+    if 'is_admin' not in st.session_state:
+        st.session_state.is_admin = False
+
+    if 'admin_view' not in st.session_state:
+        st.session_state.admin_view = "User Management"
+
+    if 'selected_option' not in st.session_state:
+        st.session_state.selected_option = "Portfolio Summary"
+
+    if 'reset_password_mode' not in st.session_state:
+        st.session_state.reset_password_mode = False
+
+    if 'forgot_password' not in st.session_state:
+        st.session_state.forgot_password = False
+
+    if 'reset_token' not in st.session_state:
+        st.session_state.reset_token = None
+
+    if 'verify_token' not in st.session_state:
+        st.session_state.verify_token = None
+
+    if 'base_url' not in st.session_state:
+        # Try to determine the base URL
+        if 'HOSTNAME' in os.environ and os.environ['HOSTNAME'].endswith('.streamlit.app'):
+            st.session_state.base_url = f"https://{os.environ['HOSTNAME']}"
+        else:
+            st.session_state.base_url = "http://localhost:10000"  # Fallback for local dev
+
+# main.py (Part 2: Helper Functions and CSS Styling)
+
+
+# Check for URL parameters
+def check_url_params():
+    """Check for URL parameters for password reset or email verification"""
+    try:
+        query_params = st.experimental_get_query_params()
+        
+        # Handle email verification
+        if "verify_email" in query_params and query_params["verify_email"]:
+            token = query_params["verify_email"][0]
+            st.session_state.verify_token = token
             
-    /* Base styling for metrics */
-    .metric-container {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        background: #262624;
-        margin-bottom: 1rem;
-    }
-    
-    /* Logo container styling */
-    .logo-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 30px auto;
-        text-align: center;
-        width: 100%;
-    }
-    
-    /* Center the image in Streamlit */
-    .stImage {
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-        text-align: center;
-    }
-    
-    /* App title as fallback */
-    .app-title {
-        text-align: center;
-        width: 100%;
-        margin-top: 10px;
-        margin-bottom: 0;
-        padding-bottom: 0;
-    }
-    
-    .app-title h1 {
-        font-size: 2.5em !important;
-        color: white;
-        font-weight: 600;
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-        line-height: 1.2;
-    }
-    
-    .app-subtitle {
-        text-align: center;
-        width: 100%;
-        margin-top: 0;
-    }
-    
-    .app-subtitle h2 {
-        font-size: 1.8em !important;
-        color: #cccccc;
-        font-weight: 400;
-        margin-top: 0 !important;
-        padding-top: 0 !important;
-        line-height: 1.2;
-    }
-    
-    .stMetric {
-        background-color:#262624 ;
-        padding: 1rem;
-        border-radius: 0.5rem;
-    }
-    
-    /* Font sizes for metrics */
-    .stMetric label {
-        font-size: 0.875rem !important;
-    }
-    
-    .stMetric .css-1xarl3l {
-        font-size: 1.25rem !important;
-    }
-    
-    .stMetric .css-1wivap2 {
-        font-size: 1rem !important;
-    }
-    
-    [data-testid="stMetricDelta"] {
-        font-size: 0.875rem !important;
-    }
-    
-    /* Make content use full width */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        max-width: 85% !important;
-    }
+        # Handle password reset
+        if "reset_password" in query_params and query_params["reset_password"]:
+            token = query_params["reset_password"][0]
+            st.session_state.reset_token = token
+            
+        # Handle OAuth callback
+        if "code" in query_params and "scope" in query_params:
+            from google_auth import handle_oauth_callback
+            handle_oauth_callback()
+            
+    except:
+        # Older Streamlit versions might not have this function
+        pass
 
-    /* Sidebar styling */
-    .css-1d391kg {
-        padding-top: 1rem;
-    }
+# Function to display the logo and welcome message
+def display_app_header():
+    col1, col2, col3 = st.columns([1, 2, 1])
     
-    /* Headers styling */
-    h1 {
-        font-size: 2rem !important;
-        padding-bottom: 1rem;
-    }
-    
-    h2 {
-        font-size: 1.5rem !important;
-        padding-bottom: 0.5rem;
-    }
-    
-    /* Add sidebar background color */
-    [data-testid="stSidebar"] {
-        background-color: #8a6d17;
-    }
-    
-    /* Make text in sidebar white */
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] span,
-    [data-testid="stSidebar"] label,
-    [data-testid="stSidebar"] div,
-    [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3 {
-        color: white;
-    }
-    
-    /* Target the subheader specifically */
-    [data-testid="stSidebar"] h3,
-    [data-testid="stSidebar"] .sidebar-content h3,
-    [data-testid="stSidebar"] .st-emotion-cache-16idsys h3,
-    [data-testid="stSidebar"] .st-bq,
-    [data-testid="stSidebar"] .st-af,
-    [data-testid="stSidebar"] .st-ae {
-        font-size: 2rem !important;
-        font-weight: bold !important;
-        margin-top: 1rem !important;
-        margin-bottom: 1rem !important;
-    }
-    
-    /* Increase font size for "Choose Action" label */
-    [data-testid="stSidebar"] .stSelectbox label,
-    [data-testid="stSidebar"] .stSelectbox .st-bs,
-    [data-testid="stSidebar"] .stSelectbox .st-bq {
-        font-size: 1.8rem !important;
-        font-weight: 500 !important;
-        margin-bottom: 0.5rem !important;
-    }
-    
-    /* Ensure dropdown options are also larger */
-    [data-testid="stSidebar"] select option {
-        font-size: 1rem !important;
-    }
-    
-    /* Add some space after the title section */
-    .welcome-section {
-        margin-top: 30px;
-    }
-    
-    /* Admin panel styling */
-    .admin-header {
-        color: #ff5555;
-        font-weight: bold;
-        padding: 10px;
-        border-radius: 5px;
-        margin-bottom: 20px;
-        border-left: 5px solid #ff5555;
-        background-color: rgba(255, 85, 85, 0.1);
-    }
-    </style>
-""", unsafe_allow_html=True)
+    with col2:
+        # Display logo or text-based title with fallback
+        try:
+            # Method 1: Using st.image with width parameter - much larger now
+            logo_path = "./assets/wealthwise-logo-zip-file/svg/logo-no-background.svg"
+            if os.path.exists(logo_path):
+                st.image(logo_path, width=600)
+            else:
+                # If main logo not found, try alternative logo
+                alt_logo_path = "./assets/wealthwise-logo-zip-file/png/logo-no-background.png"
+                if os.path.exists(alt_logo_path):
+                    st.image(alt_logo_path, width=600)
+                else:
+                    # Fallback to text-based title
+                    raise FileNotFoundError("Logo files not found")
+        except Exception as e:
+            # Fallback to text-based title if image doesn't work
+            st.markdown('<div class="app-title"><h1>WealthWise</h1></div>', unsafe_allow_html=True)
+            st.markdown('<div class="app-subtitle"><h2>Portfolio Manager</h2></div>', unsafe_allow_html=True)
 
-# Initialize session state for authentication
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
+# Custom CSS for the application
+def load_css():
+    st.markdown("""
+        <style>
+        /* Content container styling */
+        [data-testid="stAppViewContainer"] {
+            background-color: #191a16;  /* Background color, greenish-black */
+        }
+                
+        /* Base styling for metrics */
+        .metric-container {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            background: #262624;
+            margin-bottom: 1rem;
+        }
+        
+        /* Logo container styling */
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 30px auto;
+            text-align: center;
+            width: 100%;
+        }
+        
+        /* Center the image in Streamlit */
+        .stImage {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        }
+        
+        /* App title as fallback */
+        .app-title {
+            text-align: center;
+            width: 100%;
+            margin-top: 10px;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .app-title h1 {
+            font-size: 2.5em !important;
+            color: white;
+            font-weight: 600;
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+            line-height: 1.2;
+        }
+        
+        .app-subtitle {
+            text-align: center;
+            width: 100%;
+            margin-top: 0;
+        }
+        
+        .app-subtitle h2 {
+            font-size: 1.8em !important;
+            color: #cccccc;
+            font-weight: 400;
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+            line-height: 1.2;
+        }
+        
+        .stMetric {
+            background-color:#262624;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        
+        /* Font sizes for metrics */
+        .stMetric label {
+            font-size: 0.875rem !important;
+        }
+        
+        .stMetric .css-1xarl3l {
+            font-size: 1.25rem !important;
+        }
+        
+        .stMetric .css-1wivap2 {
+            font-size: 1rem !important;
+        }
+        
+        [data-testid="stMetricDelta"] {
+            font-size: 0.875rem !important;
+        }
+        
+        /* Make content use full width */
+        .block-container {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+            max-width: 85% !important;
+        }
 
-if 'username' not in st.session_state:
-    st.session_state.username = None
+        /* Sidebar styling */
+        .css-1d391kg {
+            padding-top: 1rem;
+        }
+        
+        /* Headers styling */
+        h1 {
+            font-size: 2rem !important;
+            padding-bottom: 1rem;
+        }
+        
+        h2 {
+            font-size: 1.5rem !important;
+            padding-bottom: 0.5rem;
+        }
+        
+        /* Add sidebar background color */
+        [data-testid="stSidebar"] {
+            background-color: #8a6d17;
+        }
+        
+        /* Make text in sidebar white */
+        [data-testid="stSidebar"] p,
+        [data-testid="stSidebar"] span,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] div,
+        [data-testid="stSidebar"] h2,
+        [data-testid="stSidebar"] h3 {
+            color: white;
+        }
+        
+        /* Target the subheader specifically */
+        [data-testid="stSidebar"] h3,
+        [data-testid="stSidebar"] .sidebar-content h3,
+        [data-testid="stSidebar"] .st-emotion-cache-16idsys h3,
+        [data-testid="stSidebar"] .st-bq,
+        [data-testid="stSidebar"] .st-af,
+        [data-testid="stSidebar"] .st-ae {
+            font-size: 2rem !important;
+            font-weight: bold !important;
+            margin-top: 1rem !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        /* Increase font size for "Choose Action" label */
+        [data-testid="stSidebar"] .stSelectbox label,
+        [data-testid="stSidebar"] .stSelectbox .st-bs,
+        [data-testid="stSidebar"] .stSelectbox .st-bq {
+            font-size: 1.8rem !important;
+            font-weight: 500 !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        /* Ensure dropdown options are also larger */
+        [data-testid="stSidebar"] select option {
+            font-size: 1rem !important;
+        }
+        
+        /* Add some space after the title section */
+        .welcome-section {
+            margin-top: 30px;
+        }
+        
+        /* Admin panel styling */
+        .admin-header {
+            color: #ff5555;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 5px solid #ff5555;
+            background-color: rgba(255, 85, 85, 0.1);
+        }
+        </style>
+    """, unsafe_allow_html=True)
 
-if 'is_admin' not in st.session_state:
-    st.session_state.is_admin = False
 
-if 'admin_view' not in st.session_state:
-    st.session_state.admin_view = "User Management"
 
-if 'selected_option' not in st.session_state:
-    st.session_state.selected_option = "Portfolio Summary"
+# main.py (Part 3: Main Application Flow)
 
-if 'reset_password_mode' not in st.session_state:
-    st.session_state.reset_password_mode = False
+# Initialize session state and load CSS
+init_session_state()
+load_css()
 
 # Migrate existing users to the password-based system
 migrate_users_to_password_system()
@@ -240,436 +319,32 @@ migrate_users_to_password_system()
 # Create admin user if not exists
 users = load_users()
 if not any(user.get('username', '').lower() == 'admin' for user in users):
-    register_user('admin', ADMIN_PASSWORD)
+    register_user('admin', ADMIN_PASSWORD, "admin@example.com")
     st.info("Admin user created on first run")
 
-# Login page function
-def login_page():
-    """Display the enhanced login/registration page with centered elements and no rectangular box"""
-    page_bg_img = f"""
-    <style>
-    .st-emotion-cache-uf99v8 {{
-        background-image: url("https://raw.githubusercontent.com/Ahsan3991/StockPortFolioManager/refs/heads/testing/assets/wealthwise-logo-zip-file/background-image.png");
-        background-size: cover;
-        background-position: center;
-        position: relative;
-    }}
+# Check for URL parameters for email verification or password reset
+check_url_params()
 
-    .st-emotion-cache-uf99v8::before {{
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.4);  /* Dark transparent overlay */
-        z-index: -1;  /* Places it behind content */
-    }}
-    </style>
-    """
-
-    # Custom CSS for the login page with better centering for radio buttons
-    st.markdown(
-        f"""
-        <style>
-        /* Remove unwanted elements and boxes */
-        .element-container:has(.stTextArea) {{
-            display: none !important;
-        }}
-        
-        /* Center alignment */
-        .center-column {{
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 5px 10px;
-            position: relative; 
-            z-index: 1;
-            
-        }}
-        /* Increasing opaqueness in the center for better viewing */
-        .st-emotion-cache-1wmy9hl {{
-            position: relative; 
-            z-index: 1;
-            background-color: rgba(25, 26, 22, 0.8);
-        }}
-        
-        /* Logo */
-        .logo {{
-            text-align: center;
-            margin: 2rem auto 1rem auto;
-            width: 100%;
-            
-        }}
-        
-        /* Page header */
-        .page-header {{
-            text-align: center;
-            margin: 1rem 0;
-            color: #cfcfcc;
-            font-size: 2rem;
-            font-weight: 450;
-        }}
-        
-        /* Form elements */
-        .form-control {{
-            max-width: 300px;
-            margin: 1rem auto;
-        }}
-        
-        /* Center the radio buttons */
-        .radio-wrapper {{
-            display: flex;
-            justify-content: center !important;
-            text-align: center !important;
-            margin: 1rem auto;
-        }}
-        
-        /* Style the radio buttons container */
-        .stRadio > div {{
-            display: flex;
-            justify-content: center !important;
-        }}
-        
-        /* Submit button */
-        .submit-button {{
-            max-width: 150px;
-            margin: 1.5rem auto;
-            text-align: center;
-            font-weight: bold;
-        }}
-        
-        /* About section */
-        .about-section {{
-            margin-top: 1rem;
-            padding: 1rem;
-            border-radius: 5px;
-            border: 1px solid rgba(140, 122, 49, 0.2);
-            text-align: center;
-            background-color: rgba(25, 26, 22, 0.5);
-        }}
-        
-        .about-section h2 {{
-            text-align: center;
-            color: #cfcfcc;
-            margin-bottom: 1rem;
-        }}
-        
-        /* Hide sidebar */
-        [data-testid="stSidebar"] {{
-            visibility: hidden;
-            width: 0 !important;
-        }}
-        
-        /* Other elements */
-        .stButton button {{
-            background-color: #8a6d17 !important;
-            color: white !important;
-            width: 100%;
-        }}
-        
-        /* Override Streamlit defaults */
-        div[data-testid="stVerticalBlock"] > div:empty {{
-            display: none !important;
-            height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }}
-        
-        /* Remove the 'Choose an option' text */
-        [data-testid="stRadio"] > label {{
-            display: none !important;
-        }}
-        
-        .stTextInput {{
-            max-width: 400px !important;
-            margin: 0 auto !important;
-        }}
-        
-        .stButton {{
-            max-width: 400px !important;
-            margin: 0 auto !important;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-    
-    # Add overlay div
-    st.markdown('<div class="overlay"></div>', unsafe_allow_html=True)
-    
-    # Start the centered column layout
-    st.markdown('<div class="center-column">', unsafe_allow_html=True)
-
-    # Add background image
-    st.markdown(page_bg_img, unsafe_allow_html=True)
-    
-    # Logo section
-    logo_paths = [
-        "./assets/wealthwise-logo-zip-file/svg/logo-no-background.svg",
-        "./assets/wealthwise-logo-zip-file/png/logo-no-background.png",
-        "./assets/logo.svg",
-        "./assets/logo.png",
-        "./assets/images/logo.png"
-    ]
-    
-    logo_path = None
-    for path in logo_paths:
-        if os.path.exists(path):
-            logo_path = path
-            break
-    
-    # Display logo
-    # Create a centered container for the logo
-    col1, col2, col3 = st.columns([1, 3, 1])
-  
-    with col1: 
-        st.write(" ")
-    
-    with col2:
-        st.markdown('<div class="logo">', unsafe_allow_html=True)
-        if logo_path:
-            st.image(logo_path, width=800, use_column_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-        # Page header
-        st.markdown('<h2 class="page-header">Please Login or Register</h2>', unsafe_allow_html=True)
-
-        # Login/Register radio buttons - centered
-        st.markdown('<div class="radio-wrapper">', unsafe_allow_html=True)
-        # Using label_visibility="collapsed" to hide the "Choose an option" text
-        auth_mode = st.radio("", ["Login", "Register"], horizontal=True, label_visibility="collapsed")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Username field
-        st.markdown('<div class="form-control">', unsafe_allow_html=True)
-        username = st.text_input("Username").strip()
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Password field
-        st.markdown('<div class="form-control">', unsafe_allow_html=True)
-        password = st.text_input("Password", type="password")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Confirm password field (only for registration)
-        if auth_mode == "Register":
-            st.markdown('<div class="form-control">', unsafe_allow_html=True)
-            confirm_password = st.text_input("Confirm Password", type="password")
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Submit button
-        st.markdown('<div class="submit-button">', unsafe_allow_html=True)
-        submit_button = st.button("**Submit**")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        col1, col2, col3 = st.columns([1, 5, 1])
-        with col1: st.write(" ")
-        with col2:
-            # About Section
-            st.markdown('<div class="about-section">', unsafe_allow_html=True)
-            st.markdown("<h2>About WealthWise</h2>", unsafe_allow_html=True)
-            st.write("A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, monitoring dividends and keeping track of precious metal investments.")
-            st.write("This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.")
-           
-            st.markdown('</div>', unsafe_allow_html=True)
-        with col3: st.write(" ")
-             
-    with col3: 
-        st.write(" ")
-
-    # Process form submission
-    if submit_button:
-        if not username.strip():
-            st.error("Username is required.")
-            return
-            
-        if not password:
-            st.error("Password is required.")
-            return
-            
-        if auth_mode == "Login":
-            # Special admin login
-            if username.lower() == "admin":
-                if password == ADMIN_PASSWORD:
-                    st.session_state.logged_in = True
-                    st.session_state.username = "admin"
-                    st.session_state.is_admin = True
-                    st.success("Welcome, Administrator!")
-                    time.sleep(1)
-                    st.rerun()
-                else:
-                    st.error("❌ Incorrect admin password.")
-                    time.sleep(1)
-            # Regular user login
-            elif verify_credentials(username, password):
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.session_state.is_admin = False
-                st.success(f"Welcome back, {username}!")
-                time.sleep(1)
-                st.rerun()
-            else:
-                st.error("Invalid username or password. Please try again.")
-        else:  # Register
-            # Validate registration
-            if username.lower() == "admin":
-                st.error("Cannot register with reserved username 'admin'.")
-            elif auth_mode == "Register" and password != confirm_password:
-                st.error("Passwords do not match. Please try again.")
-            elif register_user(username, password):
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.session_state.is_admin = False
-                st.success(f"Account created for {username}!")
-                time.sleep(1)
-                st.rerun()
-            else:
-                st.error(f"Username '{username}' already exists. Please choose another.")
-    
-    # Close the centered column
-    st.markdown('</div>', unsafe_allow_html=True)
-
-def change_password_page():
-    """Display the change password form"""
-    st.subheader("Change Your Password")
-    
-    current_password = st.text_input("Current Password", type="password")
-    new_password = st.text_input("New Password", type="password")
-    confirm_password = st.text_input("Confirm New Password", type="password")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("Update Password", type="primary"):
-            # Validate current password
-            if not verify_credentials(st.session_state.username, current_password):
-                st.error("Current password is incorrect.")
-            elif not new_password:
-                st.error("New password cannot be empty.")
-            elif new_password != confirm_password:
-                st.error("New passwords do not match.")
-            else:
-                # Update password
-                if update_user_password(st.session_state.username, new_password):
-                    st.success("Password updated successfully!")
-                    st.session_state.reset_password_mode = False
-                    time.sleep(1)
-                    st.rerun()
-                else:
-                    st.error("Failed to update password. Please try again.")
-    
-    with col2:
-        if st.button("Cancel"):
-            st.session_state.reset_password_mode = False
-            st.rerun()
-
-def show_user_info():
-    """Show current user information in the sidebar"""
-    if 'username' in st.session_state and st.session_state.username:
-        if st.session_state.is_admin:
-            st.sidebar.markdown(f"**Logged in as:** {st.session_state.username} 🔑")
-        else:
-            st.sidebar.markdown(f"**Logged in as:** {st.session_state.username}")
-        
-        # Add a password change option
-        if not st.session_state.is_admin:
-            if st.sidebar.button("Change Password"):
-                st.session_state.reset_password_mode = True
-            
-        if st.sidebar.button("Logout"):
-            st.session_state.logged_in = False
-            st.session_state.username = None
-            st.session_state.is_admin = False
-            st.session_state.reset_password_mode = False
-            st.rerun()
-
-# Function to show user management interface
-def show_user_management():
-    st.subheader("User Management")
-    
-    # Load all users
-    users = load_users()
-    
-    if not users:
-        st.warning("No registered users found.")
-    else:
-        # Display all users
-        st.write("### Registered Users")
-        
-        # Create a dataframe for better visualization
-        usernames = [user.get('username', user) for user in users]
-        user_df = pd.DataFrame({"Username": usernames})
-        st.dataframe(user_df, hide_index=True)
-        
-        st.divider()
-        
-        # Delete user section
-        st.subheader("Delete User")
-        
-        # Get usernames excluding admin
-        non_admin_users = [u.get('username', u) for u in users 
-                          if u.get('username', u).lower() != 'admin']
-        
-        username = st.selectbox("Select user to delete:", non_admin_users)
-        
-        # Display database path for the selected user
-        if username:
-            st.caption(f"Database path: {get_db_path(username)}")
-        
-        # Confirmation
-        if username:
-            st.warning(f"⚠️ WARNING: Deleting user '{username}' will permanently remove all their data!")
-            confirm = st.text_input("Type the username again to confirm deletion:")
-            
-            if st.button("Delete User"):
-                if not confirm:
-                    st.error("Please confirm by typing the username.")
-                elif confirm.lower() != username.lower():
-                    st.error("Username confirmation doesn't match. Please try again.")
-                else:
-                    if delete_user(username):
-                        st.success(f"✅ User '{username}' and all their data have been deleted.")
-                        # Refresh the page after deletion
-                        st.rerun()
-                    else:
-                        st.error(f"Failed to delete user '{username}'.")
-
-# Function to show app dashboard interface
-def show_app_dashboard():
-    st.subheader("Application Dashboard")
-    st.write("Welcome to the admin dashboard. Here you can see app statistics and manage the application.")
-    
-    # Load users for statistics
-    users = load_users()
-    
-    # Stats section
-    st.write("### System Statistics")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.metric("Total Users", len(users))
-        
-    with col2:
-        # Get the data directory
-        base_dir = os.environ.get('HOME', '')
-        if os.path.exists(base_dir) and os.access(base_dir, os.W_OK):
-            data_dir = os.path.join(base_dir, 'wealthwise_data')
-        else:
-            data_dir = 'db'
-        
-        if os.path.exists(data_dir):
-            db_files = [f for f in os.listdir(data_dir) if f.endswith('.db')]
-            st.metric("Database Files", len(db_files))
-        else:
-            st.metric("Database Files", "N/A")
-
-# Main application logic
-if not st.session_state.logged_in:
-    # Show login page if not logged in
+# Main application flow
+if st.session_state.verify_token:
+    # Email verification page
+    verify_email_page(st.session_state.verify_token)
+elif st.session_state.reset_token:
+    # Password reset page
+    reset_password_page(st.session_state.reset_token)
+elif st.session_state.forgot_password:
+    # Forgot password page
+    forgot_password_page()
+elif not st.session_state.logged_in:
+    # Login page
     login_page()
 else:
-    # Check if user is in password reset mode
+    # User is logged in - handle password reset mode
     if not st.session_state.is_admin and st.session_state.reset_password_mode:
         change_password_page()
     else:
+        # Regular application flow for logged-in users
+        
         # First define the sidebar to collect user choice
         with st.sidebar:
             # Show user info and logout button
@@ -710,6 +385,12 @@ else:
                 # Store selection in session state
                 st.session_state.selected_option = selected_option
         
+        # Check if user email is verified for regular users
+        if not st.session_state.is_admin and not check_email_verified(st.session_state.username):
+            st.warning("Your email is not verified. Please check your inbox for a verification email or click below to resend it.")
+            if st.button("Resend Verification Email"):
+                resend_verification_email()
+                
         # Now define the main content area OUTSIDE the sidebar
         if st.session_state.is_admin:
             # Admin interface
@@ -725,34 +406,12 @@ else:
             else:
                 show_app_dashboard()                
         else:
-            # Regular user interface
-            # Create a centered container for the logo
-            col1, col2, col3 = st.columns([1, 2, 1])
-            
-            with col2:
-                # Display logo or text-based title with fallback
-                try:
-                    # Method 1: Using st.image with width parameter - much larger now
-                    logo_path = "./assets/wealthwise-logo-zip-file/svg/logo-no-background.svg"
-                    if os.path.exists(logo_path):
-                        st.image(logo_path, width=600)
-                    else:
-                        # If main logo not found, try alternative logo
-                        alt_logo_path = "./assets/wealthwise-logo-zip-file/png/logo-no-background.png"
-                        if os.path.exists(alt_logo_path):
-                            st.image(alt_logo_path, width=600)
-                        else:
-                            # Fallback to text-based title
-                            raise FileNotFoundError("Logo files not found")
-                except Exception as e:
-                    # Fallback to text-based title if image doesn't work
-                    st.markdown('<div class="app-title"><h1>WealthWise</h1></div>', unsafe_allow_html=True)
-                    st.markdown('<div class="app-subtitle"><h2>Portfolio Manager</h2></div>', unsafe_allow_html=True)
+            # Regular user interface - display application header
+            display_app_header()
             
             # Welcome message with current portfolio name
             st.markdown('<div class="welcome-section"></div>', unsafe_allow_html=True)
             st.markdown(f"## Welcome to your personal portfolio tracker, {st.session_state.username}!")
-           # st.caption(f"Your portfolio data is stored in: {get_db_path()}")
             
             # IMPORTANT: Function calls must be OUTSIDE the sidebar context
             # This is what fixes the layout issue

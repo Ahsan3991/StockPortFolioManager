@@ -8,3 +8,7 @@ regex
 pdfplumber==0.10.3
 psx-data-reader
 python-dotenv
+streamlit-authenticator
+google-auth
+google-auth-oauthlib
+google-api-python-client
