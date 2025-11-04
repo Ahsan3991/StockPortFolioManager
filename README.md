@@ -1,6 +1,9 @@
-# Asset Portfolio Manager called WealthWise 📈
+# Asset Portfolio Manager Project called WealthWise 📈
 
 A comprehensive web application built with Streamlit for managing your portfolio, tracking trades, and monitoring dividends and keeping track of your investments. This tool helps investors maintain a clear record of their investments and analyze their portfolio performance.
+
+## DISCLAIMER
+This project is currently under development stages. You can clone the repo and customize it but do not use it as your primary portfolio manager right now
 
 ## 🌟 Features
 
